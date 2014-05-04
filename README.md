@@ -4,3 +4,7 @@
 ####云存储
 
 1. [关于云存储的一些思考](/thinking_about_cloud_storage.md)
+
+####Openstack Swift
+
+1. [概述](/swift/summary.md)
