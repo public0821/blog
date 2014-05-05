@@ -8,3 +8,5 @@
 ####Openstack Swift
 
 1. [概述](/swift/summary.md)
+2. [ring](/swift/ring.md)
+3. [上传文件](/swift/create_object.md)
