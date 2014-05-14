@@ -1,9 +1,9 @@
 ###介绍
-试着将自己了解的一些东西记录下来，如果觉得有用，欢迎拉人来围观，如果觉得哪里写的不好或者不对，欢迎提建议， public0821@gmail.com，谢谢.
+尝试写些东西，一方面锻炼自己的表达能力，另一方面通过写的过程来增加对相关知识的理解。 欢迎围观和提意见。
 
 ####云存储
 
-1. [关于云存储的一些思考](/thinking_about_cloud_storage.md)
+1. [关于云存储](/thinking_about_cloud_storage.md)
 
 ####Openstack Swift
 
