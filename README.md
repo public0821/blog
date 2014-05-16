@@ -4,9 +4,10 @@
 ####云存储
 
 1. [关于云存储](/cloud_storage/thinking_about_cloud_storage.md)
+2. [云存储实现需要考虑的一些东西](/cloud_storage/thinking_about_implement.md)
 
 ####Openstack Swift
 
-1. [概述](/cloud_storage/swift/summary.md)
+1. [架构](/cloud_storage/swift/architectural.md)
 2. [ring](/cloud_storage/swift/ring.md)
 3. [上传文件](/cloud_storage/swift/create_object.md)
