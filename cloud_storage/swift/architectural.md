@@ -32,9 +32,9 @@
 
 * Account Server
 
-   负责接收Proxy server转发过来的Account操作请求，比如往它里面添加、删除Container，根据请求的内容更新对应Account DB里面的内容，一般一个node上只有一个Account Server
+   负责接收Proxy server转发过来的Account操作请求（比如添加或者删除帐号，或者往它里面添加、删除Container）， 根据请求的内容更新对应Account DB里面的内容，一般一个node上只有一个Account Server
 
-    注意：Account Server不支持创建和删除账号操作，所有的账号都由认证系统管理（Tempauth或者Keystone）。那么如何清空一个用户下的所有文件呢？（待研究）
+    注意：Account Server不负责帐号的认证。 只负责管理Account里面的Container。
 
 * Storage Server
 
@@ -48,5 +48,17 @@
 ###其它的Server
 
 * Replication
+
+    * 遍历本地的partition，找到本地partition对应的其他server（比如系统设置的是3份备份，则本地的每个partition都能找到其它的两个node，他们上面也放有相同的partition），然后和其他node上的partition比较，如果自己比对方新，则将自己新的文件同步给对方。（当自己的文件比对方旧时，什么都不做，因为他不知道要拉对方的什么数据过来）
+    * 删除掉标记为删除的object, container, account
+
 * Updaters
+
+    * swift-object-updater： 当有object创建的时候，需要更新相应的container，让新建的object包含在对应的container里面，这里的更新操作有时可能失败，比如网络问题或者Container Server很忙，这个时候系统会将更新操作记录在磁盘上，等待Updater Server后续继续更新Account Server。(同样适用于删除object)
+    * swift-container-updater： 同swift-object-updater类似
+    * swift-account-updater： 没有，因为增加和删除account的时候，不需要更新任何东西
+
+
 * Auditors
+
+swift-account-auditor，swift-container-auditor，swift-object-auditor： 定期检查本地节点上相应数据，如果发现数据有损坏（如磁盘出现坏道，人为修改文件等），则将有问题的数据隔离，等待Replication Server同步正常的数据过来
