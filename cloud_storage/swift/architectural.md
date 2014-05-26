@@ -61,4 +61,4 @@
 
 * Auditors
 
-swift-account-auditor，swift-container-auditor，swift-object-auditor： 定期检查本地节点上相应数据，如果发现数据有损坏（如磁盘出现坏道，人为修改文件等），则将有问题的数据隔离，等待Replication Server同步正常的数据过来
+  swift-account-auditor，swift-container-auditor，swift-object-auditor： 定期检查本地节点上相应数据，如果发现数据有损坏（如磁盘出现坏道，人为修改文件等），则将有问题的数据隔离，等待Replication Server同步正常的数据过来
