@@ -16,7 +16,8 @@ UTS         CLONE_NEWUTS      Hostname and NIS domain name (since Linux 2.6.19)
 ```
 
 ###跟namespace相关的API
-1. 创建一个新的进程并把他放到新的namespace中
+
+* 创建一个新的进程并把他放到新的namespace中
 ```c
 int clone(int (*child_func)(void *), void *child_stack
             , int flags, void *arg);
@@ -27,7 +28,7 @@ flags：
     并把新创建的子进程加入新创建的这些namespace中。
 ```
 
-2. 将当前进程加入到已有的namespace中
+* 将当前进程加入到已有的namespace中
 ```c
 int setns(int fd, int nstype);
 
@@ -44,7 +45,7 @@ nstype：
     那么nstype设置为0即可
 ```
 
-3. 使当前进程退出指定类型的namespace，并加入到新创建的namespace
+* 使当前进程退出指定类型的namespace，并加入到新创建的namespace
 ```c 
 int unshare(int flags);
 
@@ -54,6 +55,7 @@ flags：
 ```
 
 clone和unshare的功能都是创建并加入新的namespace， 就目前我所了解的情况，他们的区别是：
+
 * unshare是使当前进程加入新的namespace
 * clone是创建一个新的子进程，然后让子进程加入新的namespace
 
