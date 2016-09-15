@@ -1,4 +1,5 @@
-# Namespace系列（06）：network namespace (CLONE_NEWNET)
+# Linux Namespace系列（06）：network namespace (CLONE_NEWNET)
+
 network namespace用来隔离网络设备, IP地址, 端口等. 每个namespace将会有自己独立的网络栈，路由表，防火墙规则，socket等。
 
 每个新的network namespace默认有一个本地环回接口，除了lo接口外，所有的其他网络设备（物理/虚拟网络接口，网桥等）只能属于一个network namespace。每个socket也只能属于一个network namespace。     
@@ -12,7 +13,12 @@ dev@ubuntu:~$ ethtool -k lo|grep netns-local
 netns-local: on [fixed]
 ```
 
+>本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
+
 ##示例
+
+本示例将演示如何创建新的network namespace并同外面的namespace进行通信。
+
 ```bash
 #--------------------------第一个shell窗口----------------------
 #记录默认network namespace ID
@@ -118,7 +124,7 @@ Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
 192.168.8.0     0.0.0.0         255.255.255.0   U     0      0        0 veth1
 
 #这样就可以访问外网了
-#由于demo环境的限制，所以采用下面的方式检测网络是否畅通
+#由于测试环境的限制，所以采用下面的方式检测网络是否畅通
 #如果网络没有什么限制的话，随便ping一个外部的IP测试就可以了
 root@container001:~# curl -I www.google.com
 HTTP/1.1 200 OK

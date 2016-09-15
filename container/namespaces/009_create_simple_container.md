@@ -1,8 +1,10 @@
-#Namespace系列（09）：利用Namespace创建一个简单可用的容器
+#Linux Namespace系列（09）：利用Namespace创建一个简单可用的容器
 
 本文将演示如何利用namespace创建一个完整的容器，并在里面运行busybox。如果对namespace不是很熟悉，请先参考前面几遍介绍不同类型namespace的文章。
 
 busybox是一个Linux下的可执行程序，采用静态链接，不依赖于其他任何动态库。他里面实现了一些Linux下常用的命令，如ls，hostname，date，ps，mount等等，详细的介绍请参考它的[官网](https://busybox.net/)。
+
+>本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
 ##准备container的根目录
 ```bash

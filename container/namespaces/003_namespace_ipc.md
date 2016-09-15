@@ -1,4 +1,5 @@
-# Namespace系列（03）：IPC namespace (CLONE_NEWIPC)
+# Linux Namespace系列（03）：IPC namespace (CLONE_NEWIPC)
+
 IPC namespace用来隔离[System V IPC objects](http://man7.org/linux/man-pages/man7/svipc.7.html)和[POSIX message queues](http://man7.org/linux/man-pages/man7/mq_overview.7.html)。其中System V IPC objects包含Message queues、Semaphore sets和Shared memory segments. 
 
 对于其他几种IPC方式，下面是我的理解，有可能不对，仅供参考，欢迎指正：
@@ -7,14 +8,13 @@ IPC namespace用来隔离[System V IPC objects](http://man7.org/linux/man-pages/
 * pipe好像也没必要隔离，对匿名pipe来说，只能在父子进程之间通讯，所以隔离的意义不大，而命名管道和文件系统有关，所以只要做好文件系统的隔离，命名管道也就隔离了
 * socket和网络接口及协议栈有关，只要网络接口和协议栈隔离了，socket自然也就隔离了
 
+>下面的所有例子都在ubuntu-server-x86_64 16.04下执行通过
+
 ##namespace相关tool
-从这篇文章开始，不再像介绍UTS namespace那样自己写代码，而是用ubuntu 16.04中现成的工具，他们的实现和上一篇文章中介绍UTS namespace时的代码类似，只是多了一些参数处理
+从这篇文章开始，不再像介绍UTS namespace那样自己写代码，而是用ubuntu 16.04中现成的两个工具，他们的实现和上一篇文章中介绍UTS namespace时的代码类似，只是多了一些参数处理
 
-* **nsenter**
-    加入指定进程的指定类型的namespace，然后执行参数中指定的命令。详情请参考[帮助文档](http://man7.org/linux/man-pages/man1/nsenter.1.html)和[代码](https://github.com/karelzak/util-linux/blob/master/sys-utils/nsenter.c)。
-
-* **unshare**
-    离开当前指定类型的namespace，创建且加入新的namespace，然后执行参数中指定的命令。详情请参考[帮助文档](http://man7.org/linux/man-pages/man1/unshare.1.html)和[代码](https://github.com/karelzak/util-linux/blob/master/sys-utils/unshare.c)。
+* nsenter：加入指定进程的指定类型的namespace，然后执行参数中指定的命令。详情请参考[帮助文档](http://man7.org/linux/man-pages/man1/nsenter.1.html)和[代码](https://github.com/karelzak/util-linux/blob/master/sys-utils/nsenter.c)。
+* unshare：离开当前指定类型的namespace，创建且加入新的namespace，然后执行参数中指定的命令。详情请参考[帮助文档](http://man7.org/linux/man-pages/man1/unshare.1.html)和[代码](https://github.com/karelzak/util-linux/blob/master/sys-utils/unshare.c)。
 
 ##示例
 这里将以消息队列为例，演示一下隔离效果，在本例中将用到两个ipc相关的命令
@@ -116,7 +116,7 @@ key        msqid      owner      perms      used-bytes   messages
 #加入成功后将运行/bin/bash
 dev@ubuntu:~$ sudo nsenter -t 27668 -u -i /bin/bash
 
-#确认加入成功
+#加入成功，bash的提示符也自动变过来了
 root@container001:~# readlink /proc/$$/ns/uts /proc/$$/ns/ipc
 uts:[4026532455]
 ipc:[4026532456]
@@ -130,4 +130,4 @@ key        msqid      owner      perms      used-bytes   messages
 ```
 
 ##总结
-上面介绍了IPC namespace和两个常用的跟namespace相关的工具，从演示过程可以看出，IPC namespace差不多和UTS namespace一样简单，没有太复杂的逻辑，也没有父子namespace关系。不过后续将要介绍的其他namespace就要比这个复杂多了，敬请期待。
+上面介绍了IPC namespace和两个常用的跟namespace相关的工具，从演示过程可以看出，IPC namespace差不多和UTS namespace一样简单，没有太复杂的逻辑，也没有父子namespace关系。不过后续将要介绍的其他namespace就要比这个复杂多了。

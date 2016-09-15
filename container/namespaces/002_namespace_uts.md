@@ -1,7 +1,8 @@
-# Namespace系列（02）：UTS namespace (CLONE_NEWUTS)
+# Linux Namespace系列（02）：UTS namespace (CLONE_NEWUTS)
+
 UTS namespace用来隔离系统的hostname以及NIS domain name。
 
-这两个资源可以通过sethostname(2) and setdomainname(2)函数来设置，以及通过uname(2), gethostname(2), and getdomainname(2)函数来获取.（这里括号中的2表示这个函数是system call，具体其他数字的含义请参看man的帮助文件）
+这两个资源可以通过sethostname(2)和setdomainname(2)函数来设置，以及通过uname(2), gethostname(2)和getdomainname(2)函数来获取.（这里括号中的2表示这个函数是system call，具体其他数字的含义请参看man的帮助文件）
 
 术语UTS来自于调用函数uname()时用到的结构体: struct utsname. 而这个结构体的名字源自于"UNIX Time-sharing System".
 
@@ -9,12 +10,14 @@ UTS namespace用来隔离系统的hostname以及NIS domain name。
 
 >注意： NIS domain name和DNS没有关系，关于他的介绍可以看[这里](https://www.freebsd.org/doc/handbook/network-nis.html)，由于本人对它不了解，所以在本文中不做介绍。
 
+>下面的所有例子都在ubuntu-server-x86_64 16.04下执行通过
+
 ##创建新的UTS namespace
 多说无益，直接上代码，我尽量将注释写的足够详细，请仔细看代码和输出结果
 
 >**注意:**
-1. 为了代码简单起见，只在clone函数那做了错误处理，关于clone函数的详细介绍请参考[man-pages](http://man7.org/linux/man-pages/man2/clone.2.html)
-2. 为了描述方便，某些地方会用hostname来区分UTS namespace，如hostname为container001的namespace，我们会描述成namespace container001。
+>1. 为了代码简单起见，只在clone函数那做了错误处理，关于clone函数的详细介绍请参考[man-pages](http://man7.org/linux/man-pages/man2/clone.2.html)
+>2. 为了描述方便，某些地方会用hostname来区分UTS namespace，如hostname为container001的namespace，将会被描述成namespace container001。
 
 ```c
 #define _GNU_SOURCE
@@ -35,7 +38,7 @@ static int child_func(void *hostname)
 
     //用一个新的bash来替换掉当前子进程，
     //执行完execlp后，子进程没有退出，也没有创建新的进程,
-    //而是当前子进程不再运行自己的代码，而是去执行bash的代码,
+    //只是当前子进程不再运行自己的代码，而是去执行bash的代码,
     //详情请参考"man execlp"
     //bash退出后，子进程执行完毕
     execlp("bash", "bash", (char *) NULL);
@@ -81,7 +84,7 @@ int main(int argc, char *argv[])
 下面看看输出效果
 ```bash
 #------------------------第一个shell窗口------------------------
-#将上面的代码保持为namespace_uts_demo.c， 
+#将上面的代码保存为namespace_uts_demo.c， 
 #然后用gcc将它编译成可执行文件namespace_uts_demo
 dev@ubuntu:~/code$ gcc namespace_uts_demo.c -o namespace_uts_demo   
 
@@ -239,7 +242,7 @@ uts:[4026532445]
 #重新打开一个shell窗口，将上面的代码保存为文件namespace_join.c并编译
 dev@ubuntu:~/code$ gcc namespace_join.c -o namespace_join
 
-#运行程序前，确认下当前bash是属于哪个namespace
+#运行程序前，确认下当前bash不属于namespace container001
 dev@ubuntu:~/code$ hostname
 ubuntu
 dev@ubuntu:~/code$ readlink /proc/$$/ns/uts
@@ -250,7 +253,7 @@ uts:[4026531838]
 dev@ubuntu:~/code$ sudo ./namespace_join /proc/27334/ns/uts
 root@container001:~/code#
 
-#加入成功，bash的hostname和UTS namespace的number和第一个shell窗口的都一样
+#加入成功，bash提示符里面的hostname以及UTS namespace的inode number和第一个shell窗口的都一样
 root@container001:~/code# hostname
 container001
 root@container001:~/code# readlink /proc/$$/ns/uts

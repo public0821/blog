@@ -1,4 +1,5 @@
-# Namespace系列（04）：mount namespaces (CLONE_NEWNS)
+# Linux Namespace系列（04）：mount namespaces (CLONE_NEWNS)
+
 Mount namespace隔离了文件系统的挂载点, 使得不同的mount namespace拥有自己独立的挂载点信息，不同的namespace之间不会相互影响，这对于构建用户或者容器自己的文件系统目录非常有用。
 
 当前进程所在mount namespace里的所有挂载信息可以在/proc/[pid]/mounts、/proc/[pid]/mountinfo和/proc/[pid]/mountstats里面找到。
@@ -6,6 +7,8 @@ Mount namespace隔离了文件系统的挂载点, 使得不同的mount namespace
 Mount namespaces是第一个被加入Linux的namespace，由于当时没想到还会引入其它的namespace，所以取名为CLONE_NEWNS，而没有叫CLONE_NEWMOUNT。
 
 每个mount namespace都拥有一份自己的挂载点列表，当用clone或者unshare函数创建新的mount namespace时，新创建的namespace将拷贝一份老namespace里的挂载点列表，但从这之后，他们就没有关系了，通过mount和umount增加和删除各自namespace里面的挂载点都不会相互影响。
+
+>本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
 ##演示
 
@@ -23,7 +26,7 @@ dev@ubuntu:~/iso$ ls
 #准备目录用于mount
 dev@ubuntu:~/iso$ sudo mkdir /mnt/iso1 /mnt/iso2
 
-#查看mount namespace
+#查看当前所在的mount namespace
 dev@ubuntu:~/iso$ readlink /proc/$$/ns/mnt
 mnt:[4026531840]
 
@@ -50,7 +53,7 @@ mnt:[4026532455]
 root@container001:~/iso# mount |grep /001.iso
 /home/dev/iso/001.iso on /mnt/iso1 type iso9660 (ro,relatime)
 
-#mount 002.iso
+#在新namespace中mount 002.iso
 root@container001:~/iso# mount ./002.iso /mnt/iso2/
 mount: /dev/loop0 is write-protected, mounting read-only
 root@container001:~/iso# mount |grep iso
@@ -62,7 +65,7 @@ root@container001:~/iso# umount /mnt/iso1
 root@container001:~/iso# mount |grep iso
 /home/dev/iso/002.iso on /mnt/iso2 type iso9660 (ro,relatime)
 
-#/mnt/iso1目录为空
+#/mnt/iso1目录变为空
 root@container001:~/iso# ls /mnt/iso1
 root@container001:~/iso#
 
@@ -77,13 +80,12 @@ subdir01
 #说明两个namespace中的mount信息是隔离的
 ```
 
-
 ##Shared subtrees
 在某些情况下，比如系统添加了一个新的硬盘，这个时候如果mount namespace是完全隔离的，想要在各个namespace里面用这个硬盘，就需要在每个namespace里面手动mount这个硬盘，这个是很麻烦的，这时[Shared subtrees](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt)就可以帮助我们解决这个问题。
 
-关于Shared subtrees的详细介绍请参考[Linux mount (第二部分)](http://blog.csdn.net/wuyangchun/article/details/52145439)，里面有他的详细介绍以及bind nount的例子。
+关于Shared subtrees的详细介绍请参考[Linux mount (第二部分)](https://segmentfault.com/a/1190000006899213)，里面有他的详细介绍以及bind nount的例子。
 
-##Shared subtrees演示
+###演示
 对Shared subtrees而言，mount namespace和bind mount的情况差不多，这里就简单演示一下shared和private两种类型
 ```bash
 #--------------------------第一个shell窗口----------------------
@@ -177,7 +179,7 @@ root@container001:~/disks# cat /proc/self/mountinfo |grep disk3| sed 's/ - .*//'
 ```
 
 
-关于mount的用法，尤其是bind mount，以及mount命令和mount namespace的配合，里面有很多技巧，后面如果需要用到更复杂的用法，会再做详细的介绍。
+关于mount命令和mount namespace的配合，里面有很多技巧，后面如果需要用到更复杂的用法，会再做详细的介绍。
 
 ##参考
 [kernel:Shared Subtrees](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt)

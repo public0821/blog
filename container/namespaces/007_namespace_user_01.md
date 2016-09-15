@@ -1,15 +1,17 @@
-# Namespace系列（07）：user namespace (CLONE_NEWUSER)  (第一部分)
+# Linux Namespace系列（07）：user namespace (CLONE_NEWUSER)  (第一部分)
 User namespace用来隔离user权限相关的Linux资源，包括[user IDs and group IDs](http://man7.org/linux/man-pages/man7/credentials.7.html)，[keys](http://man7.org/linux/man-pages/man2/keyctl.2.html) , 和[capabilities](http://man7.org/linux/man-pages/man7/capabilities.7.html). 
 
 这是目前实现的namespace中最复杂的一个，因为user和权限息息相关，而权限又事关容器的安全，所以稍有不慎，就会出安全问题。
 
-user namespace可以嵌套（目前内核控制最多32层），除了系统默认的user namespace外，所有的user namespace都有一个父user namespace，每个user namespace都可以有0到多个子user namespace。 当在一个进程中调用unshare或者clone创建新的user namespace时，当前进程原来所在的user namespace为父user namespace，新的user namespace为子user namespace.
+user namespace可以嵌套（目前内核控制最多32层），除了系统默认的user namespace外，所有的user namespace都有一个父user namespace，每个user namespace都可以有零到多个子user namespace。 当在一个进程中调用unshare或者clone创建新的user namespace时，当前进程原来所在的user namespace为父user namespace，新的user namespace为子user namespace.
 
-在不同的user namespace中，同样一个用户的user ID 和group ID可以不一样，换句话说，一个用户可以在父user namespace中是普通用户，在子user namespace中是超级用户（超级用户只相对于自己所拥有的资源，无法访问其他user namespace中privileged资源）。
+在不同的user namespace中，同样一个用户的user ID 和group ID可以不一样，换句话说，一个用户可以在父user namespace中是普通用户，在子user namespace中是超级用户（超级用户只相对于子user namespace所拥有的资源，无法访问其他user namespace中需要超级用户才能访问资源）。
 
 从Linux 3.8开始，创建新的user namespace不需要root权限。
 
-##示例
+>本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
+
+##创建user namespace
 ```bash
 #--------------------------第一个shell窗口----------------------
 #先记录下目前的id，gid和user namespace
@@ -26,7 +28,7 @@ nobody@ubuntu:~$ id
 uid=65534(nobody) gid=65534(nogroup) groups=65534(nogroup)
 ```
 
-很奇怪，为什么上显示的用户名是nobody，它的id和gid都是65534？
+很奇怪，为什么上面例子中显示的用户名是nobody，它的id和gid都是65534？
 
 这是因为我们还没有映射父user namespace的user ID和group ID到子user namespace中来，这一步是必须的，因为这样系统才能控制一个user namespace里的用户在其他user namespace中的权限。（比如给其他user namespace中的进程发送信号，或者访问属于其他user namespace挂载的文件）
 
@@ -51,9 +53,10 @@ nobody@ubuntu:~$ touch /home/dev/temp01
 nobody@ubuntu:~$
 ```
 
+##映射user ID和group ID
 通常情况下，创建新的user namespace后，第一件事就是映射user和group ID. 映射ID的方法是添加配置到/proc/PID/uid_map和/proc/PID/gid_map（这里的PID是新user namespace中的进程ID，刚开始时这两个文件都是空的）. 
 
-这俩个文件里面的配置格式如下（可以有多条）：
+这两个文件里面的配置格式如下（可以有多条）：
 ```    
     ID-inside-ns   ID-outside-ns   length
 ```
@@ -62,15 +65,15 @@ nobody@ubuntu:~$
 
 
 
->系统默认的user namespace没有父user namespace，但为了保持一致，kernel提供了一个虚拟的uid和gid map文件，看起来是这样子的
-```        
-dev@ubuntu:~$ cat /proc/$$/uid_map
-                0          0 4294967295
-``` 
+>系统默认的user namespace没有父user namespace，但为了保持一致，kernel提供了一个虚拟的uid和gid map文件，看起来是这样子的:
+>dev@ubuntu:~$ cat /proc/$$/uid_map
+>0          0 4294967295
+ 
 
 那么谁可以向这个文件中写配置呢？
 
 /proc/PID/uid_map和/proc/PID/gid_map的拥有者是创建新user namespace的这个user，所以和这个user在一个user namespace的root账号可以写。但这个user自己有没有写map文件权限还要看它有没有CAP_SETUID和CAP_SETGID的capability。
+
 >**注意**：只能向map文件写一次数据，但可以一次写多条，并且最多只能5条
 
 关于capability的详细介绍可以参考[这里](http://man7.org/linux/man-pages/man7/capabilities.7.html)，简单点说，原来的Linux就分root和非root，很多操作只能root完成，比如修改一个文件的owner，后来Linux将root的一些权限分解了，变成了各种capability，只要拥有了相应的capability，就能做相应的操作，不需要root账户的权限。
@@ -101,7 +104,7 @@ CapEff: 0000000000000000
 
 #为/binb/bash设置capability，
 dev@ubuntu:~$ sudo setcap cap_setgid,cap_setuid+ep /bin/bash
-#重启bash以后我们看到相应的capability已经有了
+#重新加载bash以后我们看到相应的capability已经有了
 dev@ubuntu:~$ exec bash
 dev@ubuntu:~$ cat /proc/$$/status | egrep 'Cap(Inh|Prm|Eff)'
 CapInh: 0000000000000000
@@ -130,7 +133,7 @@ nobody@ubuntu:~$ id
 uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
 
 #--------------------------第二个shell窗口----------------------
-#回到第二个窗口，确认map文件的owner，24126是新user namespace中的bash
+#回到第二个窗口，确认map文件的owner，这里24126是新user namespace中的bash
 dev@ubuntu:~$ ls -l /proc/24126/
 ......
 -rw-r--r-- 1 dev dev 0 7月  24 23:13 gid_map
@@ -165,7 +168,7 @@ user:[4026532464]
 
 
 #--------------------------第一个shell窗口----------------------
-#和第第二个窗口一样的结果
+#和第二个窗口一样的结果
 root@ubuntu:~# ls -l /proc/24126/ns
 ls: cannot open directory '/proc/24126/ns': Permission denied
 root@ubuntu:~# readlink /proc/24126/ns/user
@@ -229,7 +232,8 @@ hostname: you must be root to change the host name
 
 上面的例子中虽然是将root账号映射到了新user namespace的root账号上，但修改hostname、访问/home/dev下的文件依然失败，那是因为不管怎么映射，当用子user namespace的账号访问父user namespace的资源的时候，它启动的进程的capability都为空，所以这里子user namespace的root账号到父namespace中就相当于一个普通的账号。
 
- >注意，对于map文件来说，在父user namespace和子user namespac中打开子user namespace中进程的这个文件看到的都是同样的内容，但如果是在其他的user namespace中打开这个map文件，‘ID-outside-ns’表示的就是映射到当前user namespace的ID.这里听起来有点绕，看下面的例子
+**注意：**对于map文件来说，在父user namespace和子user namespac中打开子user namespace中进程的这个文件看到的都是同样的内容，但如果是在其他的user namespace中打开这个map文件，‘ID-outside-ns’表示的就是映射到当前user namespace的ID.这里听起来有点绕，看下面的例子
+
 ```bash
 #--------------------------打开一个新窗口----------------------
 #创建一个新的user namespace，并取名container001
@@ -240,7 +244,7 @@ root@ubuntu:~# exec bash
 root@container001:~# echo $$
 27898
 
-#在container001里面创建新的namespace container001
+#在container001里面创建新的namespace container002
 root@container001:~# unshare --user --uts -r /bin/bash
 root@container001:~# hostname container002
 root@container001:~# exec bash
@@ -249,7 +253,7 @@ root@container002:~# echo $$
 28066
 
 #查看自己namespace中进程的uid map文件
-#表示父user namespace的0映射到了当前namespace的0
+#这里表示父user namespace的0映射到了当前namespace的0
 root@container002:~# cat /proc/28066/uid_map
          0          0          1
 
@@ -269,7 +273,7 @@ root@container001:~# cat /proc/28066/uid_map
 #默认情况下，nsenter会调用setgroups函数去掉root group的权限，
 #这里--preserve-credentials是为了让nsenter不调用setgroups函数，因为调用这个函数需要root权限
 
-#测试完成后请关闭这两个窗口
+#测试完成后可以关闭这两个窗口，后面不会再用到了
 ```
 
 ##user namespace的owner

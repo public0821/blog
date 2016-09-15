@@ -1,4 +1,4 @@
-# Namespace系列（05）：pid namespace (CLONE_NEWPID)
+# Linux Namespace系列（05）：pid namespace (CLONE_NEWPID)
 
 PID namespaces用来隔离进程的ID空间，使得不同pid namespace里的进程ID可以重复且相互之间不影响。 
 
@@ -13,6 +13,8 @@ Linux下的每个进程都有一个对应的/proc/PID目录，该目录包含了
 除了在init进程里指定了handler的信号外，内核会帮init进程屏蔽掉其他任何信号，这样可以防止其他进程不小心kill掉init进程导致系统挂掉。不过有了PID namespace后，可以通过在父namespace中发送SIGKILL或者SIGSTOP信号来终止子namespace中的ID为1的进程。
 
 由于ID为1的进程的特殊性，所以每个PID namespace的第一个进程的ID都是1。当这个进程运行停止后，内核将会给这个namespace里的所有其他进程发送SIGKILL信号，致使其他所有进程都停止，于是namespace被销毁掉。
+
+>本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
 ##简单示例
 
@@ -83,11 +85,11 @@ root        44     1  0 00:06 pts/0    00:00:00 ps -ef
 
 * 调用unshare或者setns函数后，当前进程的namespace不会发生变化，不会加入到新的namespace，而它的子进程会加入到新的namespace。也就是说进程属于哪个namespace是在进程创建的时候决定的，并且以后再也无法更改。
 
-* 在一个PID namespace里的进程，它的父进程可能不在当前namespace中，而是在外面的namespace里面（这里外面的namespace指当前namespace的祖先namespace）。比如新namespace里面的第一个进程，他的父进程就在外面的namespace里。通过setns的方式加入到新namespace中的进程的父进程也在外面的namespace中。在新的namespace里面，这类进程的ppid都是0。
+* 在一个PID namespace里的进程，它的父进程可能不在当前namespace中，而是在外面的namespace里面（这里外面的namespace指当前namespace的祖先namespace），这类进程的ppid都是0。比如新namespace里面的第一个进程，他的父进程就在外面的namespace里。通过setns的方式加入到新namespace中的进程的父进程也在外面的namespace中。
  
 * 可以在祖先namespace中看到子namespace的所有进程信息，且可以发信号给子namespace的进程，但进程在不同namespace中的PID是不一样的。
 
-##嵌套示例
+###嵌套示例
 ```bash
 #--------------------------第一个shell窗口----------------------
 #记下最外层的namespace ID
@@ -123,12 +125,12 @@ bash(1)───pstree(22)
 
 #--------------------------第二个shell窗口----------------------
 #在最外层的namespace中查看上面新创建的三个namespace中的bash进程
-#从这里可以看出bash进程在这里显示的PID和各个子namespace中的PID不一样
+#从这里可以看出，这里显示的bash进程的PID和上面container003里看到的bash(1)不一样
 dev@ubuntu:~$ pstree -pl|grep bash|grep unshare
 |-sshd(955)-+-sshd(17810)---sshd(17891)---bash(17892)---sudo(31814)--
 -unshare(31815)---bash(31816)---unshare(31842)---bash(31843)--
 -unshare(31864)---bash(31865)
-#确认各个unshare进程的子bash进程对应上面的三个pid namespace
+#各个unshare进程的子bash进程分别属于上面的三个pid namespace
 dev@ubuntu:~$ sudo readlink /proc/31816/ns/pid
 pid:[4026532469]
 dev@ubuntu:~$ sudo readlink /proc/31843/ns/pid
@@ -155,8 +157,8 @@ pid:[4026532472]
 #bash（23）属于container003
 root@container002:/# readlink /proc/23/ns/pid
 pid:[4026532475]
-#为什么上面pstree的结果里面没看到nsenter加进来的bash呢？
 
+#为什么上面pstree的结果里面没看到nsenter加进来的bash呢？
 #通过ps命令我们发现，我们新加进来的那个/bin/bash的ppid是0，难怪pstree里面显示不出来
 #从这里可以看出，跟最外层namespace不一样的地方就是，这里可以有多个进程的ppid为0
 #从这里的TTY也可以看出哪些命令是在哪些窗口执行的，
@@ -177,8 +179,8 @@ root@container001:/#
 #通过pstree和ps -ef我们可看到所有三个namespace中的进程及他们的关系
 #bash(1)───unshare(22)属于container001
 #bash(23)───unshare(44)属于container002
-#bash(45)───unshare(44)属于container003
-#同上面的结果比较我们可以看出，同样的进程在不同的namespace里面拥有不同的PID
+#bash(45)属于container003，而68和84两个进程分别是上面两次通过nsenter加进来的bash
+#同上面ps的结果比较我们可以看出，同样的进程在不同的namespace里面拥有不同的PID
 root@container001:/# pstree -pl
 bash(1)───unshare(22)───bash(23)───unshare(44)───bash(45)
 root@container001:/# ps -ef
@@ -201,7 +203,7 @@ root@container002:/# exit
 dev@ubuntu:~$
 ```
 
-###“init”示例
+##“init”示例
 当一个进程的父进程被kill掉后，该进程将会被当前namespace中pid为1的进程接管，而不是被最外层的系统级别的init进程接管。
 
 当pid为1的进程停止运行后，内核将会给这个namespace及其子孙namespace里的所有其他进程发送SIGKILL信号，致使其他所有进程都停止，于是当前namespace及其子孙后代的namespace都被销毁掉。
@@ -249,13 +251,13 @@ bash(1)───unshare(22)───bash(23)───unshare(44)───bash(45
 root@container001:/# kill 170
 #结果显示sleep（171）被bash(45)接管了，而不是bash(1)，
 #进一步说明container003里的进程只会被container003里的pid 1进程接管，
-#而不会被外面pid namespace的进程接管
+#而不会被外面container001的pid 1进程接管
 root@container001:/# pstree -p
 bash(1)───unshare(22)───bash(23)───unshare(44)──
 ─bash(45)─┬─bash(113)───bash(123)
           └─sleep(171)
 
-#kill掉container002中pid 1的bash进程，在container001中，对应的为bash(23)
+#kill掉container002中pid 1的bash进程，在container001中，对应的是bash(23)
 root@container001:/# kill 23
 #根本没反应，说明bash不接收TERM信号（kill默认发送SIGTERM信号）
 root@container001:/# pstree -p
@@ -282,7 +284,7 @@ root@container003:~# Killed
 root@container001:~#
 
 #--------------------------第二个shell窗口----------------------
-#通过nsenter方式加入container002的bash也被kill掉了
+#通过nsenter方式加入到container002的bash也被kill掉了
 root@container002:/# Killed
 dev@ubuntu:~$
 
@@ -294,13 +296,13 @@ dev@ubuntu:~$
 
 [man-pages](http://man7.org/linux/man-pages/man7/pid_namespaces.7.html)里面说SIGSTOP也可以kill掉子namespace里的“init”进程，但我在上面试了下，没效果，具体原因未知。
 
-###其他
+##其他
 
-* 通常情况下，如果PID namespace中的进程都退出了，这个namespace将会被销毁，但就如在前面[“Namespace概述”](http://blog.csdn.net/wuyangchun/article/details/52143650)里介绍的，有两种情况会导致就算进程都退出了，这个namespace还会存在。但对于PID namespace来说，就算namespace还在，由于里面没有“init”进程，Kernel不允许其它进程加入到这个namespace，所以这个存在的namespace没有意义
+* 通常情况下，如果PID namespace中的进程都退出了，这个namespace将会被销毁，但就如在前面[“Namespace概述”](https://segmentfault.com/a/1190000006908272)里介绍的，有两种情况会导致就算进程都退出了，这个namespace还会存在。但对于PID namespace来说，就算namespace还在，由于里面没有“init”进程，Kernel不允许其它进程加入到这个namespace，所以这个存在的namespace没有意义
 
 * 当一个PID通过UNIX domain socket在不同的PID namespace中传输时（请参考[unix(7)](http://man7.org/linux/man-pages/man7/unix.7.html)里面的SCM_CREDENTIALS），PID将会自动转换成目的namespace中的PID.
 
-###参考
+##参考
 
 [Namespaces in operation, part 3: PID namespaces](https://lwn.net/Articles/531419/)
 [Namespaces in operation, part 4: more on PID namespaces](https://lwn.net/Articles/532748/)
