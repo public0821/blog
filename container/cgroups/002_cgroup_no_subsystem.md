@@ -4,6 +4,8 @@
 
 由于不和任何subsystem绑定，所以这棵树没有任何实际的功能，但这不影响我们的演示，还有一个好处就是我们不会受subsystem功能的影响，可以将精力集中在cgroup树上。
 
+>本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
+
 ##挂载cgroup树
 开始使用cgroup前需要先挂载cgroup树，下面先看看如何挂载一颗cgroup树，然后再查看其根目录下生成的文件
 ```bash
@@ -26,13 +28,13 @@ dev@ubuntu:~/cgroup$ wc -l ./demo/cgroup.procs
 下面是每个文件的含义：
 
 * cgroup.clone_children
-这个文件只对cpuset（subsystem）有影响，当该文件的内容为1时，新创建的cgroup将会继承父cgroup的配置，即从父cgroup里面拷贝配置文件来初始化新cgroup，可以参考 https://lkml.org/lkml/2010/7/29/368
+这个文件只对cpuset（subsystem）有影响，当该文件的内容为1时，新创建的cgroup将会继承父cgroup的配置，即从父cgroup里面拷贝配置文件来初始化新cgroup，可以参考[这里](https://lkml.org/lkml/2010/7/29/368)
 
 * cgroup.procs
 当前cgroup中的所有进程ID，系统不保证ID是顺序排列的，且ID有可能重复
 
 * cgroup.sane_behavior
-具体功能不详，可以参考 https://lkml.org/lkml/2014/7/2/684，https://lkml.org/lkml/2014/7/2/686
+具体功能不详，可以参考[这里](https://lkml.org/lkml/2014/7/2/684)和[这里](https://lkml.org/lkml/2014/7/2/686)
 
 * notify_on_release
 该文件的内容为1时，当cgroup退出时（不再包含任何进程和子cgroup），将调用release_agent里面配置的命令。新cgroup被创建时将默认继承父cgroup的这项配置。
@@ -123,7 +125,7 @@ dev@ubuntu:~/cgroup/demo/test$
 #这里我们将1421移动到root cgroup
 dev@ubuntu:~/cgroup/demo/test$ sudo sh -c 'echo 1421 > ../cgroup.procs'
 dev@ubuntu:~/cgroup/demo/test$ cat cgroup.procs
-16515		
+16515
 #移动1421到另一个cgroup之后，它的子进程不会随着移动
 
 #--------------------------第一个shell窗口----------------------

@@ -134,5 +134,51 @@ Date: Fri, 15 Jul 2016 08:12:03 GMT
 
 network namespace的概念比较简单，但如何做好网络的隔离和连通却比较难，包括性能和安全相关的考虑，需要很好的Linux网络知识。后续在介绍docker网络管理的时候会对Linux网络做一个更详细的介绍。
 
+##ip netns
+在单独操作network namespace时，ip netns是一个很方便的工具，并且它可以给namespace取一个名字，然后根据名字来操作namespace。那么给namespace取名字并且根据名字来管理namespace里面的进程是怎么实现的呢？请看下面的脚本(也可以直接看它的[源代码](https://github.com/shemminger/iproute2/blob/master/ip/ipnetns.c))：
+```bash
+#开始之前，获取一下默认network namespace的ID
+dev@ubuntu:~$ readlink /proc/$$/ns/net
+net:[4026531957]
+
+#创建一个用于绑定network namespace的文件，
+#ip netns将所有的文件放到了目录/var/run/netns下，
+#所以我们这里重用这个目录，并且创建一个我们自己的文件netnamespace1
+dev@ubuntu:~$ sudo mkdir -p /var/run/netns
+dev@ubuntu:~$ sudo touch /var/run/netns/netnamespace1
+
+#创建新的network namespace，并在新的namespace中启动新的bash
+dev@ubuntu:~$ sudo unshare --net bash
+#查看新的namespace ID
+root@ubuntu:~# readlink /proc/$$/ns/net
+net:[4026532448]
+
+#bind当前bash的namespace文件到上面创建的文件上
+root@ubuntu:~# mount --bind /proc/$$/ns/net /var/run/netns/netnamespace1
+#通过ls -i命令可以看到文件netnamespace1的inode号和namespace的编号相同，说明绑定成功
+root@ubuntu:~# ls -i /var/run/netns/netnamespace1
+4026532448 /var/run/netns/netnamespace1
+
+#退出新创建的bash
+root@ubuntu:~# exit
+exit
+#可以看出netnamespace1的inode没变，说明我们使用了bind mount后
+#虽然新的namespace中已经没有进程了，但这个新的namespace还存在
+dev@ubuntu:~$ ls -i /var/run/netns/netnamespace1
+4026532448 /var/run/netns/netnamespace1
+
+#上面的这一系列操作等同于执行了命令： ip netns add netnamespace1
+#下面的nsenter命令等同于执行了命令： ip netns exec netnamespace1 bash
+
+#我们可以通过nsenter命令再创建一个新的bash，并将它加入netnamespace1所关联的namespace（net:[4026532448]）
+dev@ubuntu:~$ sudo nsenter --net=/var/run/netns/netnamespace1 bash
+root@ubuntu:~# readlink /proc/$$/ns/net
+net:[4026532448]
+```
+
+从上面可以看出，给namespace取名字其实就是创建一个文件，然后通过mount --bind将新创建的namespace文件和该文件绑定，就算该namespace里的所有进程都退出了，内核还是会保留该namespace，以后我们还可以通过这个绑定的文件来加入该namespace。
+
+通过这种办法，我们也可以给其他类型的namespace取名字（有些类型的 namespace可能有些特殊，本人没有一个一个的试过）。
+
 ##参考
 [Namespaces in operation, part 7: Network namespaces](https://lwn.net/Articles/580893/)

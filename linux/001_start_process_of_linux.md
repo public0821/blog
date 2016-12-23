@@ -9,7 +9,7 @@
 
 2. BIOS驱动首先进行一些自检工作，然后根据配置的启动顺序，依次尝试加载启动程序。比如配置的启动顺序是CD->网卡01->USB->硬盘。 BIOS 将先检查是否能从CD启动，如果不行，接着试着从网卡启动，再试USB盘，最后再试硬盘。
 
-3. CD，U盘和硬盘的启动都是一样的，对BIOS来说，它们都是块设备，BIOS通过硬件访问接口直接访问这些块设备（如通过IDE访问硬盘），加载固定位置（第一个扇区）的内容到内存，然后跳转到那个内存的位置开始执行，这里固定位置所存放的就是Bootloader的代码，从这个时间点开始，启动的工作就由BIOS交接到了Bootloader手中了。现在Linux下常用的Bootloader是[GRUB2](https://www.gnu.org/software/grub/)，当然开源的Bootloader有[很多种](https://en.wikipedia.org/wiki/Comparison_of_boot_loaders)，并且各有各的特点.
+3. CD，U盘和硬盘的启动都是一样的，对BIOS来说，它们都是块设备，BIOS通过硬件访问接口直接访问这些块设备（如通过IDE访问硬盘），加载固定位置的内容到内存，然后跳转到那个内存的位置开始执行，这里固定位置所存放的就是Bootloader的代码，从这个时间点开始，启动的工作就由BIOS交接到了Bootloader手中了。对大多数发行版来说，CD和U盘里面放的都是安装程序，里面用的Bootloader一般都是[isolinux](http://www.syslinux.org/wiki/index.php?title=ISOLINUX)，而硬盘里面存放的是安装好的系统，常用的Bootloader是[GRUB2](https://www.gnu.org/software/grub/)，当然开源的Bootloader有[很多种](https://en.wikipedia.org/wiki/Comparison_of_boot_loaders)，并且各有各的特点.
 
 4. 从网卡启动稍微有所不同，当然前提条件是网卡支持PXE启动。 下面是大概的步骤
     1. 从网卡中加载PXE firmware到内存并执行，里面主要包含一个很小的网络驱动和TFTP client的实现
