@@ -18,7 +18,7 @@
 * 限制cgroup中所有进程所能使用的内核内存总量及其它一些内核资源(CONFIG_MEMCG_KMEM)： 限制内核内存有什么用呢？其实限制内核内存就是限制当前cgroup所能使用的内核资源，比如进程的内核栈空间，socket所占用的内存空间等，通过限制内核内存，当内存吃紧时，可以阻止当前cgroup继续创建进程以及向内核申请分配更多的内核资源。由于这块功能被使用的较少，本篇中也不对它做介绍。
 
 ##内核相关的配置
-* 由于memory subsystem比较耗资源，所以内核专门添加了一个参数cgroup_disable=memory来禁用整个memory subsystem，这个参数可以通过GRUB在启动的时候传给内核，加了这个参数后内核将不再进行memory subsystem相关的计算工作，在系统中也不能挂载memory subsystem。
+* 由于memory subsystem比较耗资源，所以内核专门添加了一个参数cgroup_disable=memory来禁用整个memory subsystem，这个参数可以通过GRUB在启动系统的时候传给内核，加了这个参数后内核将不再进行memory subsystem相关的计算工作，在系统中也不能挂载memory subsystem。
 
 * 上面提到的CONFIG_MEMCG_SWAP和CONFIG_MEMCG_KMEM都是扩展功能，在使用前请确认当前内核是否支持，下面看看ubuntu 16.04的内核：
     ```bash
@@ -362,7 +362,7 @@ disable：echo 0 > memory.move_charge_at_immigrate
 当memory.move_charge_at_immigrate为0时，就算当前cgroup中里面的进程都已经移动到其它cgropu中去了，由于进程已经占用的内存没有被统计过去，当前cgroup有可能还占用很多内存，当移除该cgroup时，占用的内存需要统计到谁头上呢？答案是依赖memory.use_hierarchy的值，如果该值为0，将会统计到root cgroup里；如果值为1，将统计到它的父cgroup里面。
 
 ###force_empty
-当向memory.force_empty文件写入0时（echo 0 > memory.force_empty），将会立即触发系统尽可能的回收该cgroup占用的内存。该功能主要使用场景是移除cgroup前（cgroup中没有进程），先执行该命令，可以尽可能的回收该cgropu占用的内存，这样迁移内存的占用数据到父或者root cgroup时会快些。
+当向memory.force_empty文件写入0时（echo 0 > memory.force_empty），将会立即触发系统尽可能的回收该cgroup占用的内存。该功能主要使用场景是移除cgroup前（cgroup中没有进程），先执行该命令，可以尽可能的回收该cgropu占用的内存，这样迁移内存的占用数据到父cgroup或者root cgroup时会快些。
 
 ###memory.swappiness
 该文件的值默认和全局的swappiness（/proc/sys/vm/swappiness）一样，修改该文件只对当前cgroup生效，其功能和全局的swappiness一样，请参考[Linux交换空间](https://segmentfault.com/a/1190000008125116)中关于swappiness的介绍。
@@ -406,16 +406,16 @@ sh: echo: I/O error
 >注意： 当系统内存吃紧且cgroup达到soft limit时，系统为了把当前cgroup的内存使用量控制在soft limit下，在收到当前cgroup新的内存分配请求时，就会触发回收内存操作，所以一旦到达这个状态，就会频繁的触发对当前cgroup的内存回收操作，会严重影响当前cgroup的性能。
 
 ###memory.pressure_level
-这个文件主要用来监控系统内存的压力（不是当前cgroup的内存压力），当系统内存压力大时，系统在分配内存之前需要回收部分内存，从而影响内存分配速度，影响系统性能，而通过监控系统内存分配的压力，可以在系统有内存压力的时候采取一定的行动来改善系统性能，比如关闭当前cgroup中不重要的服务等。目前有三种压力水平：
+这个文件主要用来监控当前cgroup的内存压力，当内存压力大时（即已使用内存快达到设置的限额），在分配内存之前需要先回收部分内存，从而影响内存分配速度，影响性能，而通过监控当前cgroup的内存压力，可以在有压力的时候采取一定的行动来改善当前cgroup的性能，比如关闭当前cgroup中不重要的服务等。目前有三种压力水平：
 
 ####low
-意味着系统在开始分配内存之前，需要先回收内存中的数据了，这时候回收的是在磁盘上有对应文件的内存数据。
+意味着系统在开始为当前cgroup分配内存之前，需要先回收内存中的数据了，这时候回收的是在磁盘上有对应文件的内存数据。
 
 ####medium
-意味着系统已经开始频繁使用交换空间了。
+意味着系统已经开始频繁为当前cgroup使用交换空间了。
 
 ####critical
-系统快撑不住了，随时有可能kill掉cgroup中的进程，或者重启系统（内核的行为取决于内核里面的oom killer配置）。
+快撑不住了，系统随时有可能kill掉cgroup中的进程。
 
 如何配置相关的监听事件呢？和memory.oom_control类似，大概步骤如下：
 
@@ -441,8 +441,8 @@ sh: echo: I/O error
 * 里面的'rss + file_mapped"才约等于是我们常说的RSS（ps aux命令看到的RSS）
 * 文件（动态库和可执行文件）及共享内存可以在多个进程之间共享，不过它们只会统计到他们的owner cgroup中的file_mapped去。（不确定是怎么定义owner的，但如果看到当前cgroup的file_mapped值很小，说明共享的数据没有算到它头上，而是其它的cgroup）
 
-##总结
-本篇没有介绍swap和kernel相关的内容，但在实际使用过程中一定要留意swap空间，如果系统使用了交换空间，那么设置限额时一定要注意一点，那就是当cgroup的物理空间不够时，内核会将不常用的内存swap out到交换空间上，从而导致一直不触发oom killer，而是不停的swap out／in，导致cgroup中的进程运行速度很慢。如果一定要用交换空间，最好的办法是限制swap+物理内存的额度，虽然我们在这篇中没有介绍这部分内容，但其使用方法和限制物理内存是一样的，只是换做写文件memory.memsw.limit_in_bytes罢了。
+##结束语
+本篇没有介绍swap和kernel相关的内容，不过在实际使用过程中一定要留意swap空间，如果系统使用了交换空间，那么设置限额时一定要注意一点，那就是当cgroup的物理空间不够时，内核会将不常用的内存swap out到交换空间上，从而导致一直不触发oom killer，而是不停的swap out／in，导致cgroup中的进程运行速度很慢。如果一定要用交换空间，最好的办法是限制swap+物理内存的额度，虽然我们在这篇中没有介绍这部分内容，但其使用方法和限制物理内存是一样的，只是换做写文件memory.memsw.limit_in_bytes罢了。
 
 ##参考
 [Memory Resource Controller](https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt)

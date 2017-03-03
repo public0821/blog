@@ -33,23 +33,19 @@ cgroup.clone_children  cgroup.procs  notify_on_release  pids.current  pids.max  
 
 下面是这两个文件的含义：
 
-* pids.current
+* pids.current: 表示当前cgroup及其所有子孙cgroup中现有的总的进程数量
+    ```bash
+    #由于这是个新创建的cgroup，所以里面还没有任何进程
+    dev@dev:/sys/fs/cgroup/pids/test$ cat pids.current 
+    0
+    ```
 
-表示当前cgroup及其所有子孙cgroup中现有的总的进程数量
-```bash
-#由于这是个新创建的cgroup，所以里面还没有任何进程
-dev@dev:/sys/fs/cgroup/pids/test$ cat pids.current 
-0
-```
-
-* pids.max
-
-当前cgroup及其所有子孙cgroup中所允许创建的总的最大进程数量，在根cgroup下没有这个文件，原因显而易见，因为我们没有必要限制整个系统所能创建的进程数量。
-```bash
-#max表示没做任何限制
-dev@dev:/sys/fs/cgroup/pids/test$ cat pids.max 
-max
-```
+* pids.max: 当前cgroup及其所有子孙cgroup中所允许创建的总的最大进程数量，在根cgroup下没有这个文件，原因显而易见，因为我们没有必要限制整个系统所能创建的进程数量。
+    ```bash
+    #max表示没做任何限制
+    dev@dev:/sys/fs/cgroup/pids/test$ cat pids.max 
+    max
+    ```
 
 ##限制进程数
 这里我们演示一下如何让限制功能生效
@@ -138,71 +134,72 @@ dev@dev:/sys/fs/cgroup/pids/test/subtest$ ls
 -bash: fork: Resource temporarily unavailable
 ```
 ##pids.current > pids.max的情况
-并不是所有的情况下都是pids.max > pids.current，在下面两种情况下，会出现pids.current > pids.max的情况：
+并不是所有情况下都是pids.max >= pids.current，在下面两种情况下，会出现pids.max < pids.current 的情况：
+
 * 设置pids.max时，将其值设置的比pids.current小
-```bash
-#继续使用上面的三个窗口
-#--------------------------第三个shell窗口----------------------
-#将test的pids.max设置为1
-dev@dev:/sys/fs/cgroup/pids/test$ echo 1 > pids.max
-dev@dev:/sys/fs/cgroup/pids/test$ cat pids.max
-1
-#这个时候就会出现pids.current > pids.max的情况
-dev@dev:/sys/fs/cgroup/pids/test$ cat pids.current
-2
+    ```bash
+    #继续使用上面的三个窗口
+    #--------------------------第三个shell窗口----------------------
+    #将test的pids.max设置为1
+    dev@dev:/sys/fs/cgroup/pids/test$ echo 1 > pids.max
+    dev@dev:/sys/fs/cgroup/pids/test$ cat pids.max
+    1
+    #这个时候就会出现pids.current > pids.max的情况
+    dev@dev:/sys/fs/cgroup/pids/test$ cat pids.current
+    2
 
-#--------------------------第一个shell窗口----------------------
-#回到第一个shell
-#还是运行失败，说明虽然pids.current > pids.max，但限制创建新进程的功能还是会生效
-dev@dev:/sys/fs/cgroup/pids/test$ ls
--bash: fork: retry: No child processes
--bash: fork: retry: No child processes
--bash: fork: retry: No child processes
--bash: fork: retry: No child processes
--bash: fork: Resource temporarily unavailable
-```
+    #--------------------------第一个shell窗口----------------------
+    #回到第一个shell
+    #还是运行失败，说明虽然pids.current > pids.max，但限制创建新进程的功能还是会生效
+    dev@dev:/sys/fs/cgroup/pids/test$ ls
+    -bash: fork: retry: No child processes
+    -bash: fork: retry: No child processes
+    -bash: fork: retry: No child processes
+    -bash: fork: retry: No child processes
+    -bash: fork: Resource temporarily unavailable
+    ```
 * pids.max只会在当前cgroup中的进程fork、clone的时候生效，将其他进程加入到当前cgroup时，不会检测pids.max，所以将其他进程加入到当前cgroup有可能会导致pids.current > pids.max
-```bash
-#继续使用上面的三个窗口
-#--------------------------第三个shell窗口----------------------
-#将subtest中的进程移动到根cgroup下，然后删除subtest
-dev@dev:/sys/fs/cgroup/pids/test$ sudo sh -c 'echo 3185 > /sys/fs/cgroup/pids/cgroup.procs'
-#里面没有进程了，说明移动成功
-dev@dev:/sys/fs/cgroup/pids/test$ cat subtest/cgroup.procs
-#移除成功
-dev@dev:/sys/fs/cgroup/pids/test$ rmdir subtest/
+    ```bash
+    #继续使用上面的三个窗口
+    #--------------------------第三个shell窗口----------------------
+    #将subtest中的进程移动到根cgroup下，然后删除subtest
+    dev@dev:/sys/fs/cgroup/pids/test$ sudo sh -c 'echo 3185 > /sys/fs/cgroup/pids/cgroup.procs'
+    #里面没有进程了，说明移动成功
+    dev@dev:/sys/fs/cgroup/pids/test$ cat subtest/cgroup.procs
+    #移除成功
+    dev@dev:/sys/fs/cgroup/pids/test$ rmdir subtest/
 
-#这时候test下的pids.max等于pids.current了
-dev@dev:/sys/fs/cgroup/pids/test$ cat pids.max
-1
-dev@dev:/sys/fs/cgroup/pids/test$ cat pids.current
-1
+    #这时候test下的pids.max等于pids.current了
+    dev@dev:/sys/fs/cgroup/pids/test$ cat pids.max
+    1
+    dev@dev:/sys/fs/cgroup/pids/test$ cat pids.current
+    1
 
-#--------------------------第二个shell窗口----------------------
-#将当前bash加入到test中
-dev@dev:/sys/fs/cgroup/pids/test/subtest$ cd ..
-dev@dev:/sys/fs/cgroup/pids/test$ echo $$ > cgroup.procs
+    #--------------------------第二个shell窗口----------------------
+    #将当前bash加入到test中
+    dev@dev:/sys/fs/cgroup/pids/test/subtest$ cd ..
+    dev@dev:/sys/fs/cgroup/pids/test$ echo $$ > cgroup.procs
 
-#--------------------------第三个shell窗口----------------------
-#回到第三个窗口，查看相关信息
-#第一个和第二个窗口的bash都属于test
-dev@dev:/sys/fs/cgroup/pids/test$ cat cgroup.procs
-3083
-3185
-dev@dev:/sys/fs/cgroup/pids/test$ cat pids.max
-1
-#出现了pids.current > pids.max的情况，这是因为我们将第二个窗口的shell加入了test
-dev@dev:/sys/fs/cgroup/pids/test$ cat pids.current
-2
-#--------------------------第二个shell窗口----------------------
-#对fork调用的限制仍然生效
-dev@dev:/sys/fs/cgroup/pids/test$ ls
--bash: fork: retry: No child processes
--bash: fork: retry: No child processes
--bash: fork: retry: No child processes
--bash: fork: retry: No child processes
--bash: fork: Resource temporarily unavailable
-```
+    #--------------------------第三个shell窗口----------------------
+    #回到第三个窗口，查看相关信息
+    #第一个和第二个窗口的bash都属于test
+    dev@dev:/sys/fs/cgroup/pids/test$ cat cgroup.procs
+    3083
+    3185
+    dev@dev:/sys/fs/cgroup/pids/test$ cat pids.max
+    1
+    #出现了pids.current > pids.max的情况，这是因为我们将第二个窗口的shell加入了test
+    dev@dev:/sys/fs/cgroup/pids/test$ cat pids.current
+    2
+    #--------------------------第二个shell窗口----------------------
+    #对fork调用的限制仍然生效
+    dev@dev:/sys/fs/cgroup/pids/test$ ls
+    -bash: fork: retry: No child processes
+    -bash: fork: retry: No child processes
+    -bash: fork: retry: No child processes
+    -bash: fork: retry: No child processes
+    -bash: fork: Resource temporarily unavailable
+    ```
 
 清理
 ```bash
@@ -213,7 +210,7 @@ dev@dev:/sys/fs/cgroup/pids/test$ cd ..
 dev@dev:/sys/fs/cgroup/pids$ sudo rmdir test/
 ```
 
-##总结
+##结束语
 本文介绍了如何利用pids这个subsystem来限制cgroup中的进程数，以及一些要注意的地方，总的来说pids比较简单。下一篇将介绍稍微复杂点的内存控制。
 
 ##参考

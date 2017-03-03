@@ -8,7 +8,7 @@ UTS namespace用来隔离系统的hostname以及NIS domain name。
 
 由于UTS namespace最简单，所以放在最前面介绍，在这篇文章中我们将会熟悉UTS  namespace以及和namespace相关的三个系统调用的使用。
 
->注意： NIS domain name和DNS没有关系，关于他的介绍可以看[这里](https://www.freebsd.org/doc/handbook/network-nis.html)，由于本人对它不了解，所以在本文中不做介绍。
+>注意： NIS domain name和DNS没有关系，关于他的介绍可以看[这里](https://www.freebsd.org/doc/handbook/network-nis.html)，由于本人对它不太了解，所以在本文中不做介绍。
 
 >下面的所有例子都在ubuntu-server-x86_64 16.04下执行通过
 

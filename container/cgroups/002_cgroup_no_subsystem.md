@@ -259,7 +259,7 @@ dev@ubuntu:~/cgroup/demo$ cat /home/dev/release_demo.log
 /home/dev/cgroup/release_demo.sh:/test
 ```
 
-##总结
+##结束语
 本文介绍了如何操作cgroup，由于没有和任何subsystem关联，所以在这颗树上的所有操作都没有实际的功能，不会对系统有影响。从下一篇开始，将介绍具体的subsystem。
 
 ##参考

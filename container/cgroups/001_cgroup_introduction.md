@@ -1,6 +1,6 @@
 # Linux Cgroup系列（01）：Cgroup概述
 
-cgroup和namespace类似，也是将进程进行分组，但它的目的和namespace不一样，namespace是为了隔离进程组之间的资源，而cgroup是为了对一组进程进行统一的监控和资源管理。
+cgroup和namespace类似，也是将进程进行分组，但它的目的和namespace不一样，namespace是为了隔离进程组之间的资源，而cgroup是为了对一组进程进行统一的资源监控和限制。
 
 cgroup分[v1](https://www.kernel.org/doc/Documentation/cgroup-v1)和[v2](https://www.kernel.org/doc/Documentation/cgroup-v2.txt)两个版本，v1实现较早，功能比较多，但是由于它里面的功能都是零零散散的实现的，所以规划的不是很好，导致了一些使用和维护上的不便，v2的出现就是为了解决v1中这方面的问题，在最新的4.5内核中，cgroup v2声称已经可以用于生产环境了，但它所支持的功能还很有限，随着v2一起引入内核的还有cgroup namespace。v1和v2可以混合使用，但是这样会更复杂，所以一般没人会这样用。
 
@@ -14,7 +14,7 @@ cgroup分[v1](https://www.kernel.org/doc/Documentation/cgroup-v1)和[v2](https:/
 ##什么是cgroup
 术语cgroup在不同的上下文中代表不同的意思，可以指整个Linux的cgroup技术，也可以指一个具体进程组。
 
-cgroup是Linux下的一种将进程按组进行管理的机制，可以把整个Linux下的cgroup技术理解为一颗一颗的树，树的每个节点是一个进程组，而每颗树又和一个或者多个subsystem关联，树的作用是将进程分组，而subsystem的作用就是对这些组进行操作。cgroup主要包括下面两部分：
+cgroup是Linux下的一种将进程按组进行管理的机制，在用户层看来，cgroup技术就是把系统中的所有进程组织成一颗一颗独立的树，每棵树都包含系统的所有进程，树的每个节点是一个进程组，而每颗树又和一个或者多个subsystem关联，树的作用是将进程分组，而subsystem的作用就是对这些组进行操作。cgroup主要包括下面两部分：
 
 * **subsystem** 一个subsystem就是一个内核模块，他被关联到一颗cgroup树之后，就会在树的每个节点（进程组）上做具体的操作。subsystem经常被称作"resource controller"，因为它主要被用来调度或者限制每个进程组的资源，但是这个说法不完全准确，因为有时我们将进程分组只是为了做一些监控，观察一下他们的状态，比如perf_event subsystem。到目前为止，Linux支持12种subsystem，比如限制CPU的使用时间，限制使用的内存，统计CPU的使用情况，冻结和恢复一组进程等，后续会对它们一一进行介绍。
 
@@ -58,28 +58,27 @@ cgroup相关的所有操作都是基于内核中的cgroup virtual filesystem，�
 这里假设目录/sys/fs/cgroup已经存在，下面用到的xxx为任意字符串，取一个有意义的名字就可以了，当用mount命令查看的时候，xxx会显示在第一列
 
 * 挂载一颗和所有subsystem关联的cgroup树到/sys/fs/cgroup
-
-```
-mount -t cgroup xxx /sys/fs/cgroup
-```
+    ```
+    mount -t cgroup xxx /sys/fs/cgroup
+    ```
 
 * 挂载一颗和cpuset subsystem关联的cgroup树到/sys/fs/cgroup/cpuset
-```
-mkdir /sys/fs/cgroup/cpuset
-mount -t cgroup -o cpuset xxx /sys/fs/cgroup/cpuset
-```
+    ```
+    mkdir /sys/fs/cgroup/cpuset
+    mount -t cgroup -o cpuset xxx /sys/fs/cgroup/cpuset
+    ```
 
 * 挂载一颗与cpu和cpuacct subsystem关联的cgroup树到/sys/fs/cgroup/cpu,cpuacct
-```
-mkdir /sys/fs/cgroup/cpu,cpuacct
-mount -t cgroup -o cpu,cpuacct xxx /sys/fs/cgroup/cpu,cpuacct
-```
+    ```
+    mkdir /sys/fs/cgroup/cpu,cpuacct
+    mount -t cgroup -o cpu,cpuacct xxx /sys/fs/cgroup/cpu,cpuacct
+    ```
 
 * 挂载一棵cgroup树，但不关联任何subsystem，下面就是systemd所用到的方式
-```
-mkdir /sys/fs/cgroup/systemd
-mount -t cgroup -o none,name=systemd xxx /sys/fs/cgroup/systemd
-```
+    ```
+    mkdir /sys/fs/cgroup/systemd
+    mount -t cgroup -o none,name=systemd xxx /sys/fs/cgroup/systemd
+    ```
 
 在很多使用systemd的系统中，比如ubuntu 16.04，systemd已经帮我们将各个subsystem和cgroup树关联并挂载好了
 ```bash
@@ -104,105 +103,105 @@ cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,cpu
 **注意**
 
 * 第一次挂载一颗和指定subsystem关联的cgroup树时，会创建一颗新的cgroup树，当再一次用同样的参数挂载时，会重用现有的cgroup树，也即两个挂载点看到的内容是一样的。
-```bash
-#在ubuntu 16.04中，systemd已经将和cpu,cpuacct绑定的cgroup树挂载到了/sys/fs/cgroup/cpu,cpuacct
-dev@ubuntu:~$ mount|grep /sys/fs/cgroup/cpu,cpuacct
-cgroup on /sys/fs/cgroup/cpu,cpuacct type cgroup (rw,nosuid,nodev,noexec,relatime,cpu,cpuacct,nsroot=/)
+    ```bash
+    #在ubuntu 16.04中，systemd已经将和cpu,cpuacct绑定的cgroup树挂载到了/sys/fs/cgroup/cpu,cpuacct
+    dev@ubuntu:~$ mount|grep /sys/fs/cgroup/cpu,cpuacct
+    cgroup on /sys/fs/cgroup/cpu,cpuacct type cgroup (rw,nosuid,nodev,noexec,relatime,cpu,cpuacct,nsroot=/)
 
-#创建一个子目录，用于后面的测试
-dev@ubuntu:~$ sudo mkdir /sys/fs/cgroup/cpu,cpuacct/test
-dev@ubuntu:~$ ls -l /sys/fs/cgroup/cpu,cpuacct/|grep test
-drwxr-xr-x  2 root root 0 Oct  9 02:27 test
+    #创建一个子目录，用于后面的测试
+    dev@ubuntu:~$ sudo mkdir /sys/fs/cgroup/cpu,cpuacct/test
+    dev@ubuntu:~$ ls -l /sys/fs/cgroup/cpu,cpuacct/|grep test
+    drwxr-xr-x  2 root root 0 Oct  9 02:27 test
 
-#将和cpu,cpuacct关联的cgroup树重新mount到另外一个目录
-dev@ubuntu:~$ mkdir -p ./cgroup/cpu,cpuacct && cd ./cgroup/
-dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o cpu,cpuacct new-cpu-cpuacct ./cpu,cpuacct
+    #将和cpu,cpuacct关联的cgroup树重新mount到另外一个目录
+    dev@ubuntu:~$ mkdir -p ./cgroup/cpu,cpuacct && cd ./cgroup/
+    dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o cpu,cpuacct new-cpu-cpuacct ./cpu,cpuacct
 
-#在新目录中看到的内容和/sys/fs/cgroup/cpu,cpuacct的一样，
-#说明我们将同一颗cgroup树mount到了系统中的不同两个目录，
-#这颗cgroup树和subsystem的关联关系不变，
-#这点类似于mount同一块硬盘到多个目录
-dev@ubuntu:~/cgroup$ ls -l ./cpu,cpuacct/ |grep test
-drwxr-xr-x  2 root root 0 Oct  9 02:27 test
+    #在新目录中看到的内容和/sys/fs/cgroup/cpu,cpuacct的一样，
+    #说明我们将同一颗cgroup树mount到了系统中的不同两个目录，
+    #这颗cgroup树和subsystem的关联关系不变，
+    #这点类似于mount同一块硬盘到多个目录
+    dev@ubuntu:~/cgroup$ ls -l ./cpu,cpuacct/ |grep test
+    drwxr-xr-x  2 root root 0 Oct  9 02:27 test
 
-#清理
-dev@ubuntu:~/cgroup$ sudo umount new-cpu-cpuacct
-```
+    #清理
+    dev@ubuntu:~/cgroup$ sudo umount new-cpu-cpuacct
+    ```
 
 * 挂载一颗cgroup树时，可以指定多个subsystem与之关联，但一个subsystem只能关联到一颗cgroup树，一旦关联并在这颗树上创建了子cgroup，subsystems和这棵cgroup树就成了一个整体，不能再重新组合。以上面ubuntu 16.04为例，由于已经将cpu,cpuacct和一颗cgroup树关联并且他们下面有子cgroup了，所以就不能单独的将cpu和另一颗cgroup树关联。
-```bash
-#尝试将cpu subsystem重新关联一颗cgroup树并且将这棵树mount到./cpu目录
-dev@ubuntu:~/cgroup$ mkdir cpu
-dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o cpu new-cpu ./cpu
-mount: new-cpu is already mounted or /home/dev/cgroup/cpu busy
-#由于cpu和cpuacct已经和一颗cgroup树关联了，所以这里mount失败
+    ```bash
+    #尝试将cpu subsystem重新关联一颗cgroup树并且将这棵树mount到./cpu目录
+    dev@ubuntu:~/cgroup$ mkdir cpu
+    dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o cpu new-cpu ./cpu
+    mount: new-cpu is already mounted or /home/dev/cgroup/cpu busy
+    #由于cpu和cpuacct已经和一颗cgroup树关联了，所以这里mount失败
 
-#尝试将devices和pids关联到同一颗树上，由于他们各自已经关联到了不同的cgroup树，所以mount失败
-dev@ubuntu:~/cgroup$ mkdir devices,pids
-dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o devices,pids new-devices-pids ./devices,pids
-mount: new-devices-pids is already mounted or /home/dev/cgroup/devices,pids busy
-```
+    #尝试将devices和pids关联到同一颗树上，由于他们各自已经关联到了不同的cgroup树，所以mount失败
+    dev@ubuntu:~/cgroup$ mkdir devices,pids
+    dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o devices,pids new-devices-pids ./devices,pids
+    mount: new-devices-pids is already mounted or /home/dev/cgroup/devices,pids busy
+    ```
 但由于/sys/fs/cgroup/hugetlb和/sys/fs/cgroup/perf_event下没有子cgroup，我们可以将他们重新组合。一般情况下不会用到这个功能，一但最开始关联好了之后，就不会去重新修改它，也即我们一般不会去修改systemd给我们设置好的subsystem和cgroup树的关联关系。
-```bash
-#/sys/fs/cgroup/hugetlb和/sys/fs/cgroup/perf_event里面没有子目录，说明没有子cgroup
-dev@ubuntu:~$ ls -l /sys/fs/cgroup/hugetlb|grep ^d
-dev@ubuntu:~$ ls -l /sys/fs/cgroup/perf_event|grep ^d
+    ```bash
+    #/sys/fs/cgroup/hugetlb和/sys/fs/cgroup/perf_event里面没有子目录，说明没有子cgroup
+    dev@ubuntu:~$ ls -l /sys/fs/cgroup/hugetlb|grep ^d
+    dev@ubuntu:~$ ls -l /sys/fs/cgroup/perf_event|grep ^d
 
-#直接mount不行，因为perf_event,hugetlb已经被系统单独mount过了
-dev@ubuntu:~$ sudo mount -t cgroup -operf_event,hugetlb xxx /mnt
-mount: xxx is already mounted or /mnt busy
+    #直接mount不行，因为perf_event,hugetlb已经被系统单独mount过了
+    dev@ubuntu:~$ sudo mount -t cgroup -operf_event,hugetlb xxx /mnt
+    mount: xxx is already mounted or /mnt busy
 
-#先umount
-dev@ubuntu:~$ sudo umount /sys/fs/cgroup/perf_event
-dev@ubuntu:~$ sudo umount /sys/fs/cgroup/hugetlb
-#如果系统默认安装了lxcfs的话，lxcfs会将它们挂载在自己的目录，
-#所以需要umount lxcfs及下面这两个目录，否则就没有真正的umount掉perf_event和hugetlb
-dev@ubuntu:~$ sudo umount lxcfs
-dev@ubuntu:~$ sudo umount /run/lxcfs/controllers/hugetlb
-dev@ubuntu:~$ sudo umount /run/lxcfs/controllers/perf_event
+    #先umount
+    dev@ubuntu:~$ sudo umount /sys/fs/cgroup/perf_event
+    dev@ubuntu:~$ sudo umount /sys/fs/cgroup/hugetlb
+    #如果系统默认安装了lxcfs的话，lxcfs会将它们挂载在自己的目录，
+    #所以需要umount lxcfs及下面这两个目录，否则就没有真正的umount掉perf_event和hugetlb
+    dev@ubuntu:~$ sudo umount lxcfs
+    dev@ubuntu:~$ sudo umount /run/lxcfs/controllers/hugetlb
+    dev@ubuntu:~$ sudo umount /run/lxcfs/controllers/perf_event
 
-#再mount，成功
-dev@ubuntu:~$ sudo mount -t cgroup -operf_event,hugetlb xxx /mnt
-dev@ubuntu:~$ ls /mnt/
-cgroup.clone_children  cgroup.sane_behavior  hugetlb.2MB.limit_in_bytes      hugetlb.2MB.usage_in_bytes  release_agent
-cgroup.procs           hugetlb.2MB.failcnt   hugetlb.2MB.max_usage_in_bytes  notify_on_release           tasks
+    #再mount，成功
+    dev@ubuntu:~$ sudo mount -t cgroup -operf_event,hugetlb xxx /mnt
+    dev@ubuntu:~$ ls /mnt/
+    cgroup.clone_children  cgroup.sane_behavior  hugetlb.2MB.limit_in_bytes      hugetlb.2MB.usage_in_bytes  release_agent
+    cgroup.procs           hugetlb.2MB.failcnt   hugetlb.2MB.max_usage_in_bytes  notify_on_release           tasks
 
-#清理
-dev@ubuntu:~$ sudo reboot
-```
+    #清理
+    dev@ubuntu:~$ sudo reboot
+    ```
 
 * 可以创建任意多个不和任何subsystem关联的cgroup树，name是这棵树的唯一标记，当name指定的是一个新的名字时，将创建一颗新的cgroup树，但如果内核中已经存在一颗一样name的cgroup树，那么将mount已存在的这颗cgroup树
-```bash
-#由于name=test的cgroup树在系统中不存在，所以这里会创建一颗新的name=test的cgroup树
-dev@ubuntu:~$ mkdir -p cgroup/test && cd cgroup
-dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o none,name=test test ./test
-#系统为新创建的cgroup树的root cgroup生成了默认文件
-dev@ubuntu:~/cgroup$ ls ./test/
-cgroup.clone_children  cgroup.procs  cgroup.sane_behavior  notify_on_release  release_agent  tasks
-#新创建的cgroup树的root cgroup里包含系统中的所有进程
-dev@ubuntu:~/cgroup$ wc -l ./test/cgroup.procs
-131 ./test/cgroup.procs
+    ```bash
+    #由于name=test的cgroup树在系统中不存在，所以这里会创建一颗新的name=test的cgroup树
+    dev@ubuntu:~$ mkdir -p cgroup/test && cd cgroup
+    dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o none,name=test test ./test
+    #系统为新创建的cgroup树的root cgroup生成了默认文件
+    dev@ubuntu:~/cgroup$ ls ./test/
+    cgroup.clone_children  cgroup.procs  cgroup.sane_behavior  notify_on_release  release_agent  tasks
+    #新创建的cgroup树的root cgroup里包含系统中的所有进程
+    dev@ubuntu:~/cgroup$ wc -l ./test/cgroup.procs
+    131 ./test/cgroup.procs
 
-#创建子cgroup
-dev@ubuntu:~/cgroup$ cd test && sudo mkdir aaaa
-#系统已经为新的子cgroup生成了默认文件
-dev@ubuntu:~/cgroup/test$ ls aaaa
-cgroup.clone_children  cgroup.procs  notify_on_release  tasks
-#新创建的子cgroup中没有任何进程
-dev@ubuntu:~/cgroup/test$ wc -l aaaa/cgroup.procs
-0 aaaa/cgroup.procs
+    #创建子cgroup
+    dev@ubuntu:~/cgroup$ cd test && sudo mkdir aaaa
+    #系统已经为新的子cgroup生成了默认文件
+    dev@ubuntu:~/cgroup/test$ ls aaaa
+    cgroup.clone_children  cgroup.procs  notify_on_release  tasks
+    #新创建的子cgroup中没有任何进程
+    dev@ubuntu:~/cgroup/test$ wc -l aaaa/cgroup.procs
+    0 aaaa/cgroup.procs
 
-#重新挂载这棵树到test1，由于mount的时候指定的name=test，所以和上面挂载的是同一颗cgroup树，于是test1目录下的内容和test目录下的内容一样
-dev@ubuntu:~/cgroup/test$ cd .. && mkdir test1
-dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o none,name=test test ./test1
-dev@ubuntu:~/cgroup$ ls ./test1
-aaaa  cgroup.clone_children  cgroup.procs  cgroup.sane_behavior  notify_on_release  release_agent  tasks
+    #重新挂载这棵树到test1，由于mount的时候指定的name=test，所以和上面挂载的是同一颗cgroup树，于是test1目录下的内容和test目录下的内容一样
+    dev@ubuntu:~/cgroup/test$ cd .. && mkdir test1
+    dev@ubuntu:~/cgroup$ sudo mount -t cgroup -o none,name=test test ./test1
+    dev@ubuntu:~/cgroup$ ls ./test1
+    aaaa  cgroup.clone_children  cgroup.procs  cgroup.sane_behavior  notify_on_release  release_agent  tasks
 
-#清理
-dev@ubuntu:~/cgroup$ sudo umount ./test1
-dev@ubuntu:~/cgroup$ sudo umount ./test
-dev@ubuntu:~/cgroup$ cd .. && rm -r ./cgroup
-```
+    #清理
+    dev@ubuntu:~/cgroup$ sudo umount ./test1
+    dev@ubuntu:~/cgroup$ sudo umount ./test
+    dev@ubuntu:~/cgroup$ cd .. && rm -r ./cgroup
+    ```
 
 ##如何查看当前进程属于哪些cgroup
 可以通过查看/proc/[pid]/cgroup(since Linux 2.6.24)知道指定进程属于哪些cgroup。
@@ -232,7 +231,7 @@ dev@ubuntu:~$ cat /proc/777/cgroup
 目前Linux支持下面12种subsystem
 
 * [cpu](https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt) (since Linux 2.6.24; CONFIG_CGROUP_SCHED)
-当CPUs比较忙时，用来限制cgroup的CPU使用率；当CPUs不忙时，不产生任何作用。              
+用来限制cgroup的CPU使用率。              
 
 * [cpuacct](https://www.kernel.org/doc/Documentation/cgroup-v1/cpuacct.txt) (since Linux 2.6.24; CONFIG_CGROUP_CPUACCT)
 统计cgroup的CPU的使用率。
@@ -271,7 +270,7 @@ suspend和restore一个cgroup中的所有进程。
 
 不同subsystem的工作方式可能差别较大，对系统性能的影响也不一样，本人不是这方面的专家，后续文章中只会从功能的角度来介绍不同的subsystem，不会涉及到他们内部的实现。
 
-##总结
+##结束语
 本文介绍了cgroup的一些概念，包括subsystem和hierarchy，然后介绍了怎么挂载cgroup文件系统以及12个subsystem的功能。从下一篇开始，将介绍cgroup具体的用法和不同的subsystem。
 
 
