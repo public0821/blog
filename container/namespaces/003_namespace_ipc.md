@@ -6,7 +6,7 @@ IPC namespace用来隔离[System V IPC objects](http://man7.org/linux/man-pages/
 
 * signal没必要隔离，因为它和pid密切相关，当pid隔离后，signal自然就隔离了，能不能跨pid namespace发送signal则由pid namespace决定
 * pipe好像也没必要隔离，对匿名pipe来说，只能在父子进程之间通讯，所以隔离的意义不大，而命名管道和文件系统有关，所以只要做好文件系统的隔离，命名管道也就隔离了
-* socket和协议栈有关，而不同的network namespace会有不同的协议栈，所以socket就被network namespace隔离了
+* socket和协议栈有关，而不同的network namespace有不同的协议栈，所以socket就被network namespace隔离了
 
 >下面的所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
