@@ -304,6 +304,6 @@ dev@ubuntu:~$
 
 ##参考
 
-[Namespaces in operation, part 3: PID namespaces](https://lwn.net/Articles/531419/)
-[Namespaces in operation, part 4: more on PID namespaces](https://lwn.net/Articles/532748/)
-[overview of Linux PID namespaces](http://man7.org/linux/man-pages/man7/pid_namespaces.7.html)
+* [Namespaces in operation, part 3: PID namespaces](https://lwn.net/Articles/531419/)
+* [Namespaces in operation, part 4: more on PID namespaces](https://lwn.net/Articles/532748/)
+* [overview of Linux PID namespaces](http://man7.org/linux/man-pages/man7/pid_namespaces.7.html)

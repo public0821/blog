@@ -190,6 +190,6 @@ dev@ubuntu:/tmp/aufs$ ls ./dir0/ -a
 使用aufs时，建议参考livecd及docker的使用方式，就是将所有的目录都以只读的方式和一个支持读写的空目录联合起来，这样所有的修改都会存到那个指定的空目录中，不用之后删除掉那个目录就可以了，并且在使用的过程中不要绕过aufs直接操作底层的branch，也不要动态的增加和删除branch，如果把使用场景弄得太复杂，由于aufs里面的细节很多，很有可能会由于对aufs的理解不深而踩坑。
 
 ##参考
-[aufs](http://aufs.sourceforge.net/)
-[aufs manual](http://manpages.ubuntu.com/manpages/xenial/en/man5/aufs.5.html)
-[Linux AuFS Examples](http://www.thegeekstuff.com/2013/05/linux-aufs/)
+* [aufs](http://aufs.sourceforge.net/)
+* [aufs manual](http://manpages.ubuntu.com/manpages/xenial/en/man5/aufs.5.html)
+* [Linux AuFS Examples](http://www.thegeekstuff.com/2013/05/linux-aufs/)

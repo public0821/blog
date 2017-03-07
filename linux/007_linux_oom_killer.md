@@ -163,6 +163,6 @@ int main(int argc, char *argv[])
 对一个进程来说，内存的使用受多种因素的限制，可能在系统内存不足之前就达到了rlimit和memory cgroup的限制，同时它还可能受不同编程语言所使用的相关内存管理库的影响，就算系统处于内存不足状态，申请新内存也不一定会触发OOM killer，需要具体问题具体分析。
 
 ##参考
-[sysctl/vm.txt](https://www.kernel.org/doc/Documentation/sysctl/vm.txt)
-[How to Configure the Linux Out-of-Memory Killer](http://www.oracle.com/technetwork/articles/servers-storage-dev/oom-killer-1911807.html)
-[When Linux Runs Out of Memory](http://www.linuxdevcenter.com/pub/a/linux/2006/11/30/linux-out-of-memory.html?page=2)
+* [sysctl/vm.txt](https://www.kernel.org/doc/Documentation/sysctl/vm.txt)
+* [How to Configure the Linux Out-of-Memory Killer](http://www.oracle.com/technetwork/articles/servers-storage-dev/oom-killer-1911807.html)
+* [When Linux Runs Out of Memory](http://www.linuxdevcenter.com/pub/a/linux/2006/11/30/linux-out-of-memory.html?page=2)

@@ -181,4 +181,4 @@ net:[4026532448]
 通过这种办法，我们也可以给其他类型的namespace取名字（有些类型的 namespace可能有些特殊，本人没有一个一个的试过）。
 
 ##参考
-[Namespaces in operation, part 7: Network namespaces](https://lwn.net/Articles/580893/)
+* [Namespaces in operation, part 7: Network namespaces](https://lwn.net/Articles/580893/)

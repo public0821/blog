@@ -159,4 +159,4 @@ dev@ubuntu:~/chroot$ ls /data
 本文利用busybox和pivot_root演示了如何创建一个简单的容器，并且实现了在host和container之间共享文件夹。这个容器的功能非常简单，很多目录都没有构建，导致只能运行busybox里面的部分命令，有些命令运行时会有异常。要想构造一个完整易用的容器，还需要很多工作要做，这里只演示了冰山一角，在后续的“docker系列”中，将深入分析docker是如何一步一步帮助我们构建安全易用的contianer的，敬请期待。
 
 ##参考
-[Video : Cgroups, namespaces, and beyond: what are containers made from?](https://www.youtube.com/watch?v=sK5i-N34im8)
+* [Video : Cgroups, namespaces, and beyond: what are containers made from?](https://www.youtube.com/watch?v=sK5i-N34im8)

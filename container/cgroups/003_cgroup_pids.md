@@ -214,4 +214,4 @@ dev@dev:/sys/fs/cgroup/pids$ sudo rmdir test/
 本文介绍了如何利用pids这个subsystem来限制cgroup中的进程数，以及一些要注意的地方，总的来说pids比较简单。下一篇将介绍稍微复杂点的内存控制。
 
 ##参考
-[Process Number Controller](https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt)
+* [Process Number Controller](https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt)

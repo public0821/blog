@@ -151,5 +151,5 @@ top命令能看到一个进程占用的虚拟内存空间、物理内存空间�
 要想精确评估一个进程到底占了多少内存，还是很难的，需要对进程的每个段有深入的理解，尤其是SHR部分都有哪些进程在一起共享，不过现在服务器上的内存都是以G为单位的，所以一般情况下大概的估算一下加上合理的测试就能满足我们的需求了。
 
 ##参考
-[Understanding Process memory](https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/)
-[Understanding memory usage on Linux](http://virtualthreads.blogspot.jp/2006/02/understanding-memory-usage-on-linux.html)
+* [Understanding Process memory](https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/)
+* [Understanding memory usage on Linux](http://virtualthreads.blogspot.jp/2006/02/understanding-memory-usage-on-linux.html)

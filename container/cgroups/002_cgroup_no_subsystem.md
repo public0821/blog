@@ -263,4 +263,4 @@ dev@ubuntu:~/cgroup/demo$ cat /home/dev/release_demo.log
 本文介绍了如何操作cgroup，由于没有和任何subsystem关联，所以在这颗树上的所有操作都没有实际的功能，不会对系统有影响。从下一篇开始，将介绍具体的subsystem。
 
 ##参考
-[CGROUPS v1](https://www.kernel.org/doc/Documentation/cgroup-v1/cgroups.txt)
+* [CGROUPS v1](https://www.kernel.org/doc/Documentation/cgroup-v1/cgroups.txt)

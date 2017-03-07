@@ -251,9 +251,9 @@ uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
 对于unshare来说，由于没有④，所有没法映射任意账号到子user namespace，这也是为什么unshare命令只能映射当前账号的原因。
 
 ##其它
-* 和pid namespace类似，当在程序中用UNIX domain sokcet将一个user namespace的uid或者gid发送给另一个user namespace中的进程时，内核会自动映射成目的user namespace中对应的uid或者gid。
+和pid namespace类似，当在程序中用UNIX domain sokcet将一个user namespace的uid或者gid发送给另一个user namespace中的进程时，内核会自动映射成目的user namespace中对应的uid或者gid。
 
 ##参考
-[user namespaces man page](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
-[Namespaces in operation, part 5: User namespaces](https://lwn.net/Articles/532593/)
-[Namespaces in operation, part 6: more on user namespaces](https://lwn.net/Articles/540087/)
+* [user namespaces man page](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
+* [Namespaces in operation, part 5: User namespaces](https://lwn.net/Articles/532593/)
+* [Namespaces in operation, part 6: more on user namespaces](https://lwn.net/Articles/540087/)

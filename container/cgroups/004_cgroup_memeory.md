@@ -445,5 +445,5 @@ sh: echo: I/O error
 本篇没有介绍swap和kernel相关的内容，不过在实际使用过程中一定要留意swap空间，如果系统使用了交换空间，那么设置限额时一定要注意一点，那就是当cgroup的物理空间不够时，内核会将不常用的内存swap out到交换空间上，从而导致一直不触发oom killer，而是不停的swap out／in，导致cgroup中的进程运行速度很慢。如果一定要用交换空间，最好的办法是限制swap+物理内存的额度，虽然我们在这篇中没有介绍这部分内容，但其使用方法和限制物理内存是一样的，只是换做写文件memory.memsw.limit_in_bytes罢了。
 
 ##参考
-[Memory Resource Controller](https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt)
-[memory subsystem](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/sec-memory.html)
+* [Memory Resource Controller](https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt)
+* [memory subsystem](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/sec-memory.html)

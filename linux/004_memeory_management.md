@@ -188,8 +188,8 @@ free的值比较少并不一定代表有问题，因为Linux会尽可能多的�
 这种情况比上面的更严重，正常情况下swap应该很少被使用，used值比较大说明交换空间被使用的比较多，如果通过vmstat命令看到swap in/out的比较频繁的话，说明系统内存严重不足，整体性能已经受到严重影响
 
 ##参考
-[Memory Management](http://www.tldp.org/LDP/tlk/mm/memory.html)
-[Mmemory FAQ](http://landley.net/writing/memory-faq.txt)
+* [Memory Management](http://www.tldp.org/LDP/tlk/mm/memory.html)
+* [Mmemory FAQ](http://landley.net/writing/memory-faq.txt)
 
 
 

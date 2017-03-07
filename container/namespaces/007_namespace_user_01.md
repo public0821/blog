@@ -362,6 +362,6 @@ user:[4026532471]
 本文先介绍了user namespace的一些概念，然后介绍如何配置mapping文件，最后介绍了user namespace的owner。从上面的介绍中可以看出，user namespace还是比较复杂的，要了解user namespace，需要对Linux下的权限有一个基本的了解。下一篇中将继续介绍user namespace和其他namespace的关系，以及一些其他的注意事项。
 
 ##参考
-[user namespaces man page](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
-[Namespaces in operation, part 5: User namespaces](https://lwn.net/Articles/532593/)
-[Namespaces in operation, part 6: more on user namespaces](https://lwn.net/Articles/540087/)
+* [user namespaces man page](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
+* [Namespaces in operation, part 5: User namespaces](https://lwn.net/Articles/532593/)
+* [Namespaces in operation, part 6: more on user namespaces](https://lwn.net/Articles/540087/)

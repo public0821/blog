@@ -1,4 +1,4 @@
-# Linux Cgroup系列（04）：限制cgroup的CPU使用（subsystem之cpu）
+# Linux Cgroup系列（05）：限制cgroup的CPU使用（subsystem之cpu）
 
 在cgroup里面，跟CPU相关的子系统有[cpusets](https://www.kernel.org/doc/Documentation/cgroup-v1/cpusets.txt)、[cpuacct](https://www.kernel.org/doc/Documentation/cgroup-v1/cpuacct.txt)和[cpu](https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt)。
 
@@ -105,5 +105,5 @@ throttled_time 51542291833
 使用cgroup限制CPU的使用率比较纠结，用cfs_period_us & cfs_quota_us吧，限制死了，没法充分利用空闲的CPU，用shares吧，又没法配置百分比，极其难控制。总之，使用cgroup的cpu子系统需谨慎。
 
 ##参考
-[CFS Bandwidth Control](https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt)
-[cpu](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/sec-cpu.html)
+* [CFS Bandwidth Control](https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt)
+* [cpu](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/sec-cpu.html)

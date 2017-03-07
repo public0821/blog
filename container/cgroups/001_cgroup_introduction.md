@@ -275,7 +275,7 @@ suspend和restore一个cgroup中的所有进程。
 
 
 ##参考
-[cgroups man page](http://man7.org/linux/man-pages/man7/cgroups.7.html)
-[CGROUPS v1](https://www.kernel.org/doc/Documentation/cgroup-v1/cgroups.txt)
-[CGROUPS v2](https://www.kernel.org/doc/Documentation/cgroup-v2.txt)
-[Control groups series by Neil Brown](https://lwn.net/Articles/604609/)
+* [cgroups man page](http://man7.org/linux/man-pages/man7/cgroups.7.html)
+* [CGROUPS v1](https://www.kernel.org/doc/Documentation/cgroup-v1/cgroups.txt)
+* [CGROUPS v2](https://www.kernel.org/doc/Documentation/cgroup-v2.txt)
+* [Control groups series by Neil Brown](https://lwn.net/Articles/604609/)

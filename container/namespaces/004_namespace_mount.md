@@ -182,7 +182,7 @@ root@container001:~/disks# cat /proc/self/mountinfo |grep disk3| sed 's/ - .*//'
 关于mount命令和mount namespace的配合，里面有很多技巧，后面如果需要用到更复杂的用法，会再做详细的介绍。
 
 ##参考
-[kernel:Shared Subtrees](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt)
-[lwn:Shared subtrees](https://lwn.net/Articles/159077/)
-[lwn:Mount namespaces, mount propagation, and unbindable mounts](https://lwn.net/Articles/690679/)
-[lwn:Mount namespaces and shared subtrees](https://lwn.net/Articles/689856/)
+* [kernel:Shared Subtrees](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt)
+* [lwn:Shared subtrees](https://lwn.net/Articles/159077/)
+* [lwn:Mount namespaces, mount propagation, and unbindable mounts](https://lwn.net/Articles/690679/)
+* [lwn:Mount namespaces and shared subtrees](https://lwn.net/Articles/689856/)
