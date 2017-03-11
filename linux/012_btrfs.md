@@ -70,9 +70,10 @@ Create subvolume './sub2'
 #创建两个文件夹
 dev@ubuntu:/mnt/btrfs$ mkdir dir1 dir2
 
-#在sub1和dir1中分别创建一个文件
+#在sub1、sub2和dir1中分别创建一个文件
 dev@ubuntu:/mnt/btrfs$ touch dir1/dir1-01.txt
 dev@ubuntu:/mnt/btrfs$ touch sub1/sub1-01.txt
+dev@ubuntu:/mnt/btrfs$ touch sub2/sub2-01.txt
 
 #最后看看目录结构，是不是看起来sub1和dir1没什么区别？
 dev@ubuntu:/mnt/btrfs$ tree
@@ -83,35 +84,29 @@ dev@ubuntu:/mnt/btrfs$ tree
 ├── sub1
 │   └── sub1-01.txt
 └── sub2
-
+    └── sub2-01.txt
 ```
 不过由于每个subvolume都是一个单独的虚拟设备，所以无法跨subvolume建立硬链接
 
 ```bash
-#虽然/mnt/btrfs/sub1和/mnt/btrfs属于相同的Btrfs文件系统，并且在一块物理硬盘上
-#但由于他们属于不同的subvolume（/mnt/btrfs属于root subvolume），
-#所以在它们之间建立硬链接失败
-dev@debian:/mnt/btrfs$ ln ./sub1/sub1-01.txt ./
-ln: failed to create hard link './sub1-01.txt' => './sub1/sub1-01.txt': Invalid cross-device link
+#虽然sub1和sub2属于相同的Btrfs文件系统，并且在一块物理硬盘上
+#但由于他们属于不同的subvolume，所以在它们之间建立硬链接失败
+dev@ubuntu:/mnt/btrfs$ ln ./sub1/sub1-01.txt ./sub2/
+ln: failed to create hard link './sub2/sub1-01.txt' => './sub1/sub1-01.txt': Invalid cross-device link
 ```
 
 ##删除subvolume
-subvolume不能用rm来删除，只能通过btrfs命令来删除，并且只有当subvolume下没有文件时才能被删除
+subvolume不能用rm来删除，只能通过btrfs命令来删除
 ```bash
 #普通的目录通过rm就可以被删除
 dev@ubuntu:/mnt/btrfs$ rm -r dir2
 
 #通过rm命令删除subvolume失败
-dev@ubuntu:/mnt/btrfs$ rm -r sub2
+dev@ubuntu:/mnt/btrfs$ sudo rm -r sub2
 rm: cannot remove 'sub2': Operation not permitted
 
 #需要通过btrfs命令才能删除
-#由于sub1下有文件，所以不能被删除
-dev@debian:/mnt/btrfs$ sudo btrfs subvolume del sub1
-Delete subvolume (no-commit): '/mnt/btrfs/sub1'
-ERROR: cannot delete '/mnt/btrfs/sub1': Operation not permitted
-
-#删除sub2成功
+#删除sub2成功（就算subvolume里面有文件也能被删除）
 dev@ubuntu:/mnt/btrfs$ sudo btrfs subvolume del sub2
 Delete subvolume (no-commit): '/mnt/btrfs/sub2'
 dev@ubuntu:/mnt/btrfs$ tree
@@ -122,6 +117,14 @@ dev@ubuntu:/mnt/btrfs$ tree
     └── sub1-01.txt
 
 ```
+上面删除的时候可以看到这样的提示： Delete subvolume (no-commit)，表示subvolume被删除了，但没有提交，意思是在内存里面生效了，但磁盘上的内容还没删，意味着如果这个时候系统crash掉，这个subvolume有可能还会回来。btrfs这样做的好处是删除速度很快，不会影响使用，缺点是有可能在后台commit的过程中系统挂掉，导致commit失败。
+
+为了确保subvolume里的数据被真正的从磁盘上移除掉，可以在删除subvolume的时候指定-c参数，这样btrfs命令会等提交完成之后再返回
+```bash
+dev@ubuntu:/mnt/btrfs$ sudo btrfs subvolume del -c sub2
+Delete subvolume (commit): '/mnt/btrfs/sub2'
+```
+
 ##挂载subvolume
 subvolume可以直接通过mount命令挂载，和挂载其它设备没什么区别，具体的挂载参数请参考[文档](https://btrfs.wiki.kernel.org/index.php/Mount_options)
 
@@ -177,6 +180,8 @@ dev@ubuntu:/mnt/btrfs$ btrfs property set -ts ./sub1/ ro false
  * 当前快照里面的修改不会影响其它快照
  * 快照可以被删除
 
+当然subvolume也可以像git里的master一样被删除。
+
 ###创建快照
 ```bash
 #在root subvolume的基础上创建一个快照
@@ -227,7 +232,7 @@ dev@debian:/mnt/btrfs$ tree
 ```
 
 ###删除快照
-删除快照和删除subvolume是一样的，不过删除快照不要求快照下为空
+删除快照和删除subvolume是一样的，没有区别
 ```
 dev@debian:/mnt/btrfs$ sudo btrfs subvolume del snap-root
 Delete subvolume (no-commit): '/mnt/btrfs/snap-root'
@@ -269,11 +274,11 @@ dev@debian:/mnt/btrfs$ sudo btrfs subvolume set-default 0 /mnt/btrfs/
 
 ####default subvolume有什么用呢？
 
-利用snapshot和default subvolume，可以很方便的实现不同系统版本的切换，比如将系统安装在一个subvolume下面，安装好了之后做一个snapshot A，然后将snapshot A设置成default subvolume，当要做什么危险操作的时候，先在A的基础上做一个快照B，如果操作成功，那么什么都不用做，继续用A，多一个快照B在那里也不占空间，如果操作失败，那么可以将B设置成default subvolume，并将A删除，这样就相当于系统回滚。
+利用snapshot和default subvolume，可以很方便的实现不同系统版本的切换，比如将系统安装在一个subvolume下面，当要做什么危险操作的时候，先在subvolume的基础上做一个快照A，如果操作成功，那么什么都不用做（或者把A删掉），继续用原来的subvolume，A不被删掉也没关系，多一个快照在那里也不占空间，如果操作失败，那么可以将A设置成default subvolume，并将原来的subvolume删除，这样就相当于系统回滚。
 
 有了这样的功能后，Linux的每次操作都能回滚，养成在修改操作前做snapshot的习惯，就再也不用担心rm误删文件了。
 
-现在有些发行版已经有了类似的功能，将安装工具和Btrfs结合，自动的在安装软件之前打一个snapshot，然后安装软件，如果成功，什么都不做，如果失败，修改default subvolume为新的snapshot，删除掉原来的snapshot，这样对系统没有任何影响，并且所有操作对用户是透明的。
+现在有些发行版已经有了类似的功能，如ubuntu，将安装工具（apt）和Btrfs结合，自动的在安装软件之前打一个snapshot，然后安装软件，如果成功，删除新的snapshot，如果失败，修改default subvolume为新的snapshot，删除掉原来的snapshot，这样对系统没有任何影响，并且所有操作对用户是透明的。
 
 随着Btrfs的成熟和普及，相信会改变一些我们使用Linux的习惯。
 
