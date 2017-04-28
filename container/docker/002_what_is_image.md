@@ -2,9 +2,10 @@
 
 上一篇介绍了hello-world的大概流程，那么hello-world的image里面到底包含了些什么呢？里面的格式是怎么样的呢？
 
-## image包含的内容
+image所包含的内容以及格式都是有标准的，由[Open Containers Initiative](https://www.opencontainers.org/)(OCI)负责维护，地址为[image-spec](https://github.com/opencontainers/image-spec/blob/master/spec.md)，本文将对标准做一个简单的解释。
 
-image的标准现在由opencontainer负责维护，地址为[image-spec](https://github.com/opencontainers/image-spec/blob/master/spec.md)。一个image由[manifest](https://github.com/opencontainers/image-spec/blob/master/manifest.md), [image index](https://github.com/opencontainers/image-spec/blob/master/image-index.md) (可选), [filesystem layers](https://github.com/opencontainers/image-spec/blob/master/layer.md)和[configuration](https://github.com/opencontainers/image-spec/blob/master/config.md)四部分组成。
+## image包含的内容
+一个image由[manifest](https://github.com/opencontainers/image-spec/blob/master/manifest.md)、[image index](https://github.com/opencontainers/image-spec/blob/master/image-index.md) (可选)、[filesystem layers](https://github.com/opencontainers/image-spec/blob/master/layer.md)和[configuration](https://github.com/opencontainers/image-spec/blob/master/config.md)四部分组成。
 
 ### 关系图
 先来看看构成image的四部分的关系图：
@@ -35,7 +36,7 @@ image的标准现在由opencontainer负责维护，地址为[image-spec](https:/
 下面分别介绍它们各自都包含了哪些内容。
 
 ### Filesystem Layers
-标准中的Filesystem Layer包含两部分信息，分别是包含的内容和打包格式
+Filesystem Layer包含了文件系统的信息，即该image包含了哪些文件/目录，以及它们的属性和数据。
 
 #### 包含的内容
 每个filesystem layer都包含了在上一个layer上的改动情况，主要包含三方面的内容：
@@ -44,7 +45,7 @@ image的标准现在由opencontainer负责维护，地址为[image-spec](https:/
 * 文件类型：每个变化发生在哪种文件类型上
 * 文件属性：文件的修改时间、用户ID、组ID、RWX权限等
 
-比如在某一层增加了一个文件，那么这一层所包含的内容就是增加的这个文件的数据以及它的属性，具体的细节请参考[标准文档](https://github.com/opencontainers/image-spec/blob/master/layer.md)，下一篇中会给出一个简单示例。
+比如在某一层增加了一个文件，那么这一层所包含的内容就是增加的这个文件的数据以及它的属性，具体的细节请参考[标准文档](https://github.com/opencontainers/image-spec/blob/master/layer.md)。
 
 #### 打包格式
 最终每个layer都会打包成一个文件，这个文件的格式可以是tar和tar+gzip两种中的一种。
@@ -116,12 +117,15 @@ image config就是一个json文件，它的media type是```application/vnd.oci.i
 这里只介绍几个比较重要的属性，其它的请参考[标准文档](https://github.com/opencontainers/image-spec/blob/master/config.md)
 
 * **architecture**：CPU架构类型，现在大部分都是amd64，不过arm64估计会慢慢多起来
-* **os**：操作系统，主要是linux
+* **os**：操作系统，只用过linux，没看到过其它类型
 * **config**：当根据这个image启动container时，config里面的配置就是运行container时的默认参数，在后续介绍runtime的时候再仔细介绍每一项的意义
 * **rootfs**：指定了image所包含的filesystem layers，type的值必须是layers，diff_ids包含了layer的列表，从上到下分别对应从底到上的layer，每一个sha256就是每层layer对应tar包的sha256码
 
 ### manifest
-manifest也是一个json文件，media type为```application/vnd.oci.image.manifest.v1+json```，这个文件包含了对前面filesystem layers和image config的描述，一看官方网站给出的示例就明白了：
+[manifest](https://github.com/opencontainers/image-spec/blob/master/manifest.md)也是一个json文件，media type为```application/vnd.oci.image.manifest.v1+json```，这个文件包含了对前面filesystem layers和image config的描述，一看官方网站给出的示例就明白了：
+
+>manifest文件的sha256就是image的ID
+
 ```
 {
   "schemaVersion": 2,
@@ -160,9 +164,11 @@ manifest也是一个json文件，media type为```application/vnd.oci.image.manif
 >这里layer的sha256和image config文件中的diff_ids有可能不一样，比如这里的layer文件格式是tar+gzip，那么这里的sha256就是tar+gzip包的sha256码，而diff_ids是tar+gzip解压后tar文件的sha256码
 
 ### Image Index(可选)
-image index也是个json文件，media type是```application/vnd.oci.image.index.v1+json```。
+[image index](https://github.com/opencontainers/image-spec/blob/master/image-index.md)也是个json文件，media type是```application/vnd.oci.image.index.v1+json```。
 
-其实到manifest为止，已经有了整个image的完整描述，为什么还需要image index这个文件呢？主要原因是manifest描述的image只能支持一个平台，没法支持多个平台，加上index文件的目的就是让这个image支持多个平台，看官方给的示例：
+其实到manifest为止，已经有了整个image的完整描述，为什么还需要image index这个文件呢？主要原因是manifest描述的image只能支持一个平台，也没法支持多个tag，加上index文件的目的就是让这个image能支持多个平台和多tag。
+
+image index是v1.0.0-rc5才加进来的一个文件，还不稳定，后面可能还会修改，并且docker现在也不支持该文件，这里看看官方给的示例，先了解一下：
 
 ```
 {
@@ -196,11 +202,11 @@ image index也是个json文件，media type是```application/vnd.oci.image.index
   }
 }
 ```
-index文件包含了对manifest的描述，包括每个manifest的media type，文件大小，sha256码，支持的平台以及平台特殊的配置。
+index文件包含了对image中所有manifest的描述，相对于一个manifest列表，包括每个manifest的media type，文件大小，sha256码，支持的平台以及平台特殊的配置。
 
 比如ubuntu想让它的image支持amd64和arm64平台，于是它在两个平台上都进行了编译，然后将两个平台的layer都放到这个filesystem layers里面，然后写两个config文件和两个manifest文件，再加上这样一个描述不同平台manifest的index文件，就可以让这个image支持两个平台了，两个平台的用户可以使用同样的命令得到自己平台想要的那些layer。
 
->据我所知，目前docker还不支持该文件，估计将不同平台的image分开管理要比放在一起要好一点
+>image index最新的标准里面并没有涉及到tag，不过估计后续会加上。
 
 ## image layout
 上面介绍了image所包含的内容，在开始介绍layout之前，先来回顾一下上一篇介绍hello-world时提到的从register服务器拉image的过程：
@@ -214,24 +220,82 @@ index文件包含了对manifest的描述，包括每个manifest的media type，�
 
 那么image从服务器拉下来后，在本地应该怎么存储呢？文件名称和目录结构应该是怎样的呢？OCI也有相应的标准，名字叫[image layout](https://github.com/opencontainers/image-spec/blob/master/image-layout.md)，有了这样的标准之后，我们就可以将整个image打成一个包，方便的在不同机器，不同容器平台之间导入导出。
 
+不过遗憾的是，OCI的这个标准还在变化中，根据github上所看到的，v1.0.0-rc5在v1.0.0-rc4上就有较大的修改，并且现在docker也不支持该标准。
 
 >docker对OCI image layout的支持还在开发中，相关动态请关注：[Support OCI image layout in docker save/load](https://github.com/moby/moby/pull/26369)
 
+这里我们看看[v1.0.0-rc4的格式](https://github.com/opencontainers/image-spec/blob/v1.0.0-rc4/image-layout.md)，下面是hello-world image的目录结构，了解一下：
+```
+dev@debian:~/images/hello-world$ tree
+.
+├── blobs
+│   └── sha256
+│       ├── 636fcf0bc8246e08d2df4771dc764d35ea50428b8dfaa904773b0707cb4f6303
+│       ├── 7520415ce76232cdd62ecc345cea5ea44f5b6b144dc62351f2cd2b08382532a3
+│       └── 9b8e3ce88f3a2aaa478cfe613632f38d27be5eddaa002a719fa1bfa9ff4f7f63
+├── oci-layout
+└── refs
+    └── latest
+
+```
+
+#### oci-layout
+包含image标准的版本信息
+```
+dev@debian:~/images/hello-world$ cat ./oci-layout| jq .
+{
+  "imageLayoutVersion": "1.0.0"
+}
+```
+
+#### refs
+里面的每个文件就是一个tag（hello-world的image中只有一个latest tag），每个tag都是一个单独的image，相当于一个image的包里面可以包含多个有关系的image，文件的内容如下：
+```
+dev@debian:~/images/hello-world$ cat ./refs/latest | jq .
+{
+  "mediaType": "application/vnd.oci.image.manifest.v1+json",
+  "digest": "sha256:9b8e3ce88f3a2aaa478cfe613632f38d27be5eddaa002a719fa1bfa9ff4f7f63",
+  "size": 347
+}
+```
+其实就是对manifest文件的描述，根据sha256就可以在blobs的目录里面找到相应的manifest文件
+
+#### blobs
+里面包含了具体文件的内容，每个文件名都是其内容的sha256码，根据上面refs文件里面的sha256，就能在这里找到对应的manifest文件的内容，然后根据manifest文件的内容，就能一步一步的往下找到image config文件和filesystem layers文件。
+```
+dev@debian:~/images/hello-world$ file ./blobs/sha256/*
+./blobs/sha256/636fcf0bc8246e08d2df4771dc764d35ea50428b8dfaa904773b0707cb4f6303: ASCII text, with very long lines, with no line terminators
+./blobs/sha256/7520415ce76232cdd62ecc345cea5ea44f5b6b144dc62351f2cd2b08382532a3: gzip compressed data
+./blobs/sha256/9b8e3ce88f3a2aaa478cfe613632f38d27be5eddaa002a719fa1bfa9ff4f7f63: ASCII text, with very long lines, with no line terminators
+
+dev@debian:~/images/hello-world$ sha256sum ./blobs/sha256/*
+636fcf0bc8246e08d2df4771dc764d35ea50428b8dfaa904773b0707cb4f6303  ./blobs/sha256/636fcf0bc8246e08d2df4771dc764d35ea50428b8dfaa904773b0707cb4f6303
+7520415ce76232cdd62ecc345cea5ea44f5b6b144dc62351f2cd2b08382532a3  ./blobs/sha256/7520415ce76232cdd62ecc345cea5ea44f5b6b144dc62351f2cd2b08382532a3
+9b8e3ce88f3a2aaa478cfe613632f38d27be5eddaa002a719fa1bfa9ff4f7f63  ./blobs/sha256/9b8e3ce88f3a2aaa478cfe613632f38d27be5eddaa002a719fa1bfa9ff4f7f63
+```
+
 ## 下载image
+上面介绍image layout时的image是从哪里来的呢？
+
 为了快速的构建container的rootfs，docker在本地有它自己的一套image管理方式，有自己的layout，并且目前```docker save```命令也不支持导出OCI格式的image，只能导出docker自己的格式，所以我们只能借助其它的工具得到OCI格式的image。
 
 这里我们用[skopeo](https://github.com/projectatomic/skopeo)来演示一下从docker hub上拉取image，并把它在本地存成OCI的layout。
 
+>这里生成的layout和最新版本的标准有点差别，和v1.0.0-rc4的标准一致，如果你用同样的命令得到不一样的layout，说明skopeo有更新，支持了更新的标准，
+
 ```
 #这里的所有命令在debian 8.6的环节上运行通过
+#编译安装skopeo
 $ git clone https://github.com/projectatomic/skopeo $GOPATH/src/github.com/projectatomic/skopeo
 $ sudo apt-get install libgpgme11-dev libdevmapper-dev btrfs-tools go-md2man
 $ cd $GOPATH/src/github.com/projectatomic/skopeo 
 $ make binary-local
 $ sudo make install
-$ skopeo copy docker://busybox oci:busybox-oci
-$ tree busybox-oci/
-busybox-oci/
+
+#下载hello-world的image
+$ skopeo copy docker://hello-world oci:hello-world
+$ tree hello-world/
+hello-world/
 ├── blobs
 │   └── sha256
 │       ├── 636fcf0bc8246e08d2df4771dc764d35ea50428b8dfaa904773b0707cb4f6303
@@ -241,6 +305,9 @@ busybox-oci/
 └── refs
     └── latest
 ```
+
+## 结束语
+虽然OCI iamge的标准还处于rc阶段，没有正式release，并且docker现在也不支持OCI image的layout，不过相信过不了多久，OCI image的标准就会被广泛支持，先了解一下还是很有必要的。
 
 ## 参考
 

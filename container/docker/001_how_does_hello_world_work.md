@@ -23,10 +23,10 @@ To generate this message, Docker took the following steps:
     ......
 ```
 
-hello-world这个容器运行的时候就是打印上面一段话到终端，然后退出。从输出结果中我们看到了它运行的大概步骤，下面我们将对这个过程详细的展开一下。
+hello-world这个容器运行的时候就是打印上面一段话到终端，然后退出。它在输出结果中给我们描述了它运行的大概步骤，下面我们将对这个过程做进一步的分析。
 
-## 流程图
-这里是比上面四步更细化的流程图
+## 关系图
+这里是运行hello-world过程中，进程之间的关系
 ```
                               +------------+
                               |            |
@@ -39,19 +39,31 @@ hello-world这个容器运行的时候就是打印上面一段话到终端，然
                                     |
                                     ↓
                                +---------+
-+--------+       Restful       |         |    grpc      +-------------------+  4   +------------------------+  5   +-------------+
-| docker |<------------------->| dockerd |<------------>| docker-containerd |<---->| docker-containerd-shim |<---->| docker-runc |
-+--------+         1           |         |      3       +-------------------+      +------------------------+      +-------------+
-                               +---------+
++--------+       Restful       |         |    grpc      +-------------------+
+| docker |<------------------->| dockerd |<------------>| docker-containerd |
++--------+         1           |         |      3       +-------------------+
+                               +---------+                       ↑
+                                                                 |
+                                                                 | 4
+                                                                 ↓
+                                                      +------------------------+  5   +-------------+
+                                                      | docker-containerd-shim |<---->| docker-runc |
+                                                      +------------------------+      +-------------+
+                                                                                             ↑
+                                                                                             | 6
+                                                                                             ↓
+                                                                                         +-------+
+                                                                                         | hello |
+                                                                                         +-------+
 ```
 
-## 步骤
+## 步骤过程
 ### 1. docker <--> dockerd
-第一步是docker通过rest的方式发送请求给dockerd。
+docker进程是docker客户端，dockerd进程是docker服务器端，这里的第一步是docker通过rest的方式发送请求给dockerd。
 
 当在shell里面运行```docker run hello-world```时，docker程序被启动，这个程序就是docker的客户端，它的任务就是解析命令行参数，然后构造相应的rest请求给dockerd，Engine API里描述了dockerd支持的所有请求，docker v17.03.0对应的API版本为[v1.26](https://docs.docker.com/engine/api/v1.26/)，而docker v17.03.1对应的版本为[v1.27](https://docs.docker.com/engine/api/v1.27/)，API版本之间的差别可以参考[version-history](https://docs.docker.com/engine/api/version-history/)。
 
-我们运行hello world就相当于下面的curl命令：
+运行hello world就相当于下面的curl命令：
 ```bash
 #这里假设已经配置了dockerd监听本地tcp端口2375
 
@@ -73,7 +85,7 @@ dev@debian:~$ curl '127.0.0.1:2375/v1.27/images/create?fromImage=hello-world&tag
 {"status":"Digest: sha256:c5515758d4c5e1e838e9cd307f6c6a0d620b5e07e6f927b07d05f6d12a1ac8d7"}
 {"status":"Status: Downloaded newer image for hello-world:latest"}
 
-#再次创建容器成功
+#再次创建容器成功，得到容器ID
 dev@debian:~$ curl 127.0.0.1:2375/v1.27/containers/create  -X POST -H "Content-Type: application/json" -d '{"Image": "hello-world"}'
 {"Id":"2a4717ffb830bf4cff12ef6e6f1e93129970df273387797fd023e10292e3e928","Warnings":null}
 
@@ -85,48 +97,88 @@ dev@debian:~$ curl '127.0.0.1:2375/v1.27/containers/2a4717ffb830bf4cff12ef6e6f1e
 dev@debian:~$ curl 127.0.0.1:2375/v1.27/containers/2a4717ffb830bf4cff12ef6e6f1e93129970df273387797fd023e10292e3e928/start -X POST 
 ```
 
-从上面的curl命令可以看出，在hello-world这个场景中，docker客户端主要发送了三个请求给dockerd，一个是创建image，然后创建container，最后一个是是启动容器。
+从上面的curl命令可以看出，在hello-world这个场景中，docker客户端主要发送了四个请求给dockerd，首先创建image，然后创建容器，接着attach标准输出，最后启动容器。（attach涉及到标准输入输出重定向，这里不细说）
+
+这里是它们之间的交互流程：
+```
+                               +---------+
++--------+                     |         |
+|        | 1.create container  |         |
+|        |-------------------->|         |
+|        |                     |         |
+|        | 2.image not found   |         |
+|        |<--------------------|         |
+|        |                     |         |
+|        | 3.create image      |         |
+|        |-------------------->|         |
+|        |                     |         |
+|        | 4.image created     |         |
+|        |<--------------------|         |
+| docker |                     | dockerd |
+|        | 5.create container  |         |
+|        |-------------------->|         |
+|        |                     |         |
+|        | 6.container id      |         |
+|        |<--------------------|         |
+|        |                     |         |
+|        | 7.start container   |         |
+|        |-------------------->|         |
+|        |                     |         |
+|        | 8.container started |         |
+|        |<--------------------|         |
++--------+                     |         |
+                               +---------+
+```
+
+流程对应的文字描述如下：
+
+* 客户端发送创建容器请求给dockerd，dockerd收到请求后，发现本地没有相应的额image，于是返回失败。
+* 客户端收到失败的响应后，立即发送创建image的请求过来，dockerd收到后，会去docker hub上拿相应的image，拿到后返回成功。
+* 客户端再次发送创建容器请求给dockerd，dockerd收到会根据拿到的image创建一个新容器，并初始化容器运行时要用到的相关目录和配置文件，里面就包含了rootfs，容器创建完成后，dockerd返回容器的ID给客户端。
+* 客户端发启动容器请求给dockerd，dockerd收到请求后，会通知docker-containerd启动容器，启动成功后返回成功给客户端。
 
 ### 2. dockerd <--> "docker hub"
 
-当dockerd第一次收到docker的create container请求后，发现本地没有相应的额image，于是返回失败，客户端收到失败的响应后，就发送create image的请求过来。
+docker hub是docker官方存放镜像（image）的服务器，当dockerd收到客户端的创建image请求后就会向[docker hub](https://registry-1.docker.io/v2)要相应image，它们之间也是使用rest接口，协议为[Registry HTTP API V2](https://docs.docker.com/registry/spec/api/)。如果需要登录的话，比如访问自己的私有仓库，那么需要访问[index](https://index.docker.io/v1)进行身份验证。
 
-dockerd收到客户端的创建image请求后就会向Registry服务器要相应image，默认情况下是找[docker hub](https://registry-1.docker.io/v2)，它们之间也是使用rest接口，它们之间的协议为[Registry HTTP API V2](https://docs.docker.com/registry/spec/api/)。如果需要登录的话，比如访问自己的私有仓库，那么需要访问[index](https://index.docker.io/v1)进行身份验证。
+取image的大概过程如下：
 
-取image的过程大概包含如下几步：
-
-* 首先获取image的manifests，manifests里面包含两部分内容，一是image的配置文件的digest(sha256)，另一个是image包含的所有layer的digest(sha256)
+* 首先获取image的manifests，manifests里面包含两部分内容，一是image的配置文件的digest(sha256)，另一个是image包含的所有filesystem layer的digest(sha256)
 * 根据上一步得到的image的配置文件的digest，在本地找是否已经存在对应的image，如果已经存在的话，就不用再往下走了，用现成的就可以了，如果没有，则继续
-* 遍历manifests里面的所有layer，根据其digest在本地找，如果找到对应的layer，则跳过，否则从服务器取相应layer的压缩包
+* 遍历manifests里面的所有layer，根据其digest在本地找，如果找到对应的layer，则跳过当前layer，否则从服务器取相应layer的压缩包
 * 等上面的所有步骤完成后，就会拼出完整的image
 
->从上面的过程可以看出，docker只拉取本地没有的layer
+> 这里的每个layer都是相对于上一个文件系统layer的变化情况。
+> 从上面的过程可以看出，docker只会拉取本地没有的layer。
 
 ### 3. dockerd <--> docker-containerd
 docker-containerd是和dockerd一起启动的后台进程，他们之间使用unix socket通信，协议是[grpc](http://www.grpc.io/).
 
-image有了之后，dockerd就收到了创建容器的请求，在处理这个请求时，dockerd会创建container的相关目录和配置文件，里面就包含了rootfs（rootfs由image构造而成）
-
-等再收到客户端的启动容器请求后，dockerd将通过grpc的方式通知docker-containerd进程启动container，同时将创建container时生成的相关目录和配置传给docker-containerd
+等dockerd把容器创建好了之后，接着会收到客户端的启动容器请求，dockerd在做了一些初始化工作后，就会通过grpc的方式通知docker-containerd进程启动指定的容器
 
 ### 4. docker-containerd <--> docker-containerd-shim
-这两个进程都属于[containerd](https://github.com/containerd/containerd)项目，当docker-containerd收到dockerd的启动容器请求之后，就会启动docker-containerd-shim进程，并将相关配置所在的目录作为参数传给它。
+docker-containerd和docker-containerd-shim都属于[containerd](https://github.com/containerd/containerd)项目，当docker-containerd收到dockerd的启动容器请求之后，会做一些初始化工作，然后启动docker-containerd-shim进程，并将相关配置所在的目录作为参数传给它。
 
-docker-containerd管理一大波container，而docker-containerd-shim只是一个小程序，负责管理一个container运行时的工作，相当于是对runc的一个包装，充当containerd和runc之间的桥接工作，runc能干的就交给runc来做，runc做不了的就放到这里来做。
+可以简单的理解成docker-containerd管理所有本机正在运行的容器，而docker-containerd-shim只负责管理一个运行的容器，相当于是对runc的一个包装，充当containerd和runc之间的桥梁，runc能干的就交给runc来做，runc做不了的就放到这里来做。
 
 ### 5. docker-containerd-shim <--> runc
 opencontainer定义了容器的[image](https://github.com/opencontainers/image-spec)和[runtime](https://github.com/opencontainers/runtime-spec)标准，而[runc](https://github.com/opencontainers/runc)就是docker贡献给opencontainer的标准runtime的一个实现。
 
-docker-containerd-shim进程启动后，就会按照runtime的标准准备好相关环境，然后启动runc进程。
+docker-containerd-shim进程启动后，就会按照runtime的标准准备好相关运行时环境，然后启动runc进程。
 
-如何启动runc是公开的标准，大概过程就是准备好rootfs和配置文件，然后使用合适的参数启动runc进程就可以了，runc会负责启动container中的hello程序。
+如何启动runc是公开的标准，大概过程就是准备好rootfs和配置文件，然后使用合适的参数启动runc进程就可以了。
+
+### 6. runc <--> hello
+runc打开容器的配置文件，找到要启动的程序，然后启动相应进程，在hello-world的这个例子中，runc会启动容器中的hello程序。
+
+到此为止，容器启动成功。
 
 ## 进程间的关系
 等runc将容器启动起来后，runc进程就退出了，于是容器里面的第一个进程（hello）的父进程就变成了docker-containerd-shim，在pstree的输出里面，进程树的关系大概如下：
 ```
 systemd───dockerd───docker-containerd───docker-containerd-shim───hello
 ```
-其中dockerd和docker-containerd是常驻进程，而docker-containerd-shim则由docker-containerd按需启动。
+其中dockerd和docker-containerd是后台常驻进程，而docker-containerd-shim则由docker-containerd按需启动。
 
 >runc退出后其子进程hello不是应该由init进程接管吗？怎么就变成了docker-containerd-shim的子进程了呢？这是因为从Linux 3.4开始，[prctl](http://man7.org/linux/man-pages/man2/prctl.2.html)增加了对PR_SET_CHILD_SUBREAPER的支持，这样就可以控制孤儿进程可以被谁接管，而不是像以前一样只能由init进程接管。
 
