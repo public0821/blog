@@ -2,7 +2,9 @@
 
 [上一篇文章](https://segmentfault.com/a/1190000007241437)中介绍了如何管理cgroup，从这篇开始将介绍具体的subsystem。
 
-本篇将介绍一个简单的subsystem，名字叫[pids](https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt)，功能是限制cgroup及其所有子孙cgroup里面能创建的总的进程数量。
+本篇将介绍一个简单的subsystem，名字叫[pids](https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt)，功能是限制cgroup及其所有子孙cgroup里面能创建的总的task数量。
+
+>注意：这里的task指通过fork和clone函数创建的进程，由于clone函数也能创建线程（在Linux里面，线程是一种特殊的进程），所以这里的task也包含线程，本文统一以进程来代表task，即本文中的进程代表了进程和线程
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
