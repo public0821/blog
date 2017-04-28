@@ -86,10 +86,10 @@
 * **8：** net_rx_action调用网卡驱动里的poll函数来一个一个的处理数据包
 * **9：** 在pool函数中，驱动会一个接一个的读取网卡写到内存中的数据包，内存中数据包的格式只有驱动知道
 * **10：** 驱动程序将内存中的数据包转换成内核网络模块能识别的skb格式，然后调用napi_gro_receive函数
-* **11：** napi_gro_receive会处理[GRO](https://lwn.net/Articles/358910/)相关的内容，也就是将可以合并的数据包进行合并，这样就只需要调用一次协议栈。然后判断是否开启了[XPS](https://github.com/torvalds/linux/blob/v3.13/Documentation/networking/scaling.txt#L99-L222)，如果开启了，将会调用enqueue_to_backlog
+* **11：** napi_gro_receive会处理[GRO](https://lwn.net/Articles/358910/)相关的内容，也就是将可以合并的数据包进行合并，这样就只需要调用一次协议栈。然后判断是否开启了[RPS](https://github.com/torvalds/linux/blob/v3.13/Documentation/networking/scaling.txt#L99-L222)，如果开启了，将会调用enqueue_to_backlog
 * **12：** 在enqueue_to_backlog函数中，会将数据包放入CPU的softnet_data结构体的input_pkt_queue中，然后返回，如果input_pkt_queue满了的话，该数据包将会被丢弃，queue的大小可以通过net.core.netdev_max_backlog来配置
 * **13：** CPU会接着在自己的软中断上下文中处理自己input_pkt_queue里的网络数据（调用__netif_receive_skb_core）
-* **14：** 如果没开启[XPS](https://github.com/torvalds/linux/blob/v3.13/Documentation/networking/scaling.txt#L99-L222)，napi_gro_receive会直接调用__netif_receive_skb_core
+* **14：** 如果没开启[RPS](https://github.com/torvalds/linux/blob/v3.13/Documentation/networking/scaling.txt#L99-L222)，napi_gro_receive会直接调用__netif_receive_skb_core
 * **15：** 看是不是有AF_PACKET类型的socket（也就是我们常说的原始套接字），如果有的话，拷贝一份数据给它。tcpdump抓包就是抓的这里的包。
 * **16：** 调用协议栈相应的函数，将数据包交给协议栈处理。
 * **17：** 待内存中的所有数据包被处理完成后（即poll函数执行完成），启用网卡的硬中断，这样下次网卡再收到数据的时候就会通知CPU
