@@ -82,3 +82,7 @@ listening on lo, link-type EN10MB (Ethernet), capture size 262144 bytes
 20:25:50.590018 IP 192.168.3.1 > 192.168.3.11: ICMP echo reply, id 24177, seq 2, length 64
 20:25:51.590027 IP 192.168.3.1 > 192.168.3.11: ICMP echo reply, id 24177, seq 3, length 64
 20:25:52.590030 IP 192.168.3.1 > 192.168.3.11: ICMP echo reply, id 24177, seq 4, length 64
+
+[Linux Switching – Interconnecting Namespaces](http://www.opencloudblog.com/?p=66)
+
+[Virtual networking in Linux](https://www.ibm.com/developerworks/library/l-virtual-networking/)
