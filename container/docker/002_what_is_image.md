@@ -1,8 +1,8 @@
-# image(镜像)是什么
+# 走进docker系列(02)：image(镜像)是什么？
 
 上一篇介绍了hello-world的大概流程，那么hello-world的image里面到底包含了些什么呢？里面的格式是怎么样的呢？
 
-image所包含的内容以及格式都是有标准的，由[Open Containers Initiative](https://www.opencontainers.org/)(OCI)负责维护，地址为[image-spec](https://github.com/opencontainers/image-spec/blob/master/spec.md)，本文将对标准做一个简单的解释。
+image所包含的内容以及格式都是有标准的，由[Open Containers Initiative](https://www.opencontainers.org/)(OCI)负责维护，地址为[image-spec](https://github.com/opencontainers/image-spec/blob/master/spec.md)，本文将对该标准做一个简单的解释。
 
 ## image包含的内容
 一个image由[manifest](https://github.com/opencontainers/image-spec/blob/master/manifest.md)、[image index](https://github.com/opencontainers/image-spec/blob/master/image-index.md) (可选)、[filesystem layers](https://github.com/opencontainers/image-spec/blob/master/layer.md)和[configuration](https://github.com/opencontainers/image-spec/blob/master/config.md)四部分组成。
@@ -117,9 +117,9 @@ image config就是一个json文件，它的media type是```application/vnd.oci.i
 这里只介绍几个比较重要的属性，其它的请参考[标准文档](https://github.com/opencontainers/image-spec/blob/master/config.md)
 
 * **architecture**：CPU架构类型，现在大部分都是amd64，不过arm64估计会慢慢多起来
-* **os**：操作系统，只用过linux，没看到过其它类型
+* **os**：操作系统，本人只用过linux
 * **config**：当根据这个image启动container时，config里面的配置就是运行container时的默认参数，在后续介绍runtime的时候再仔细介绍每一项的意义
-* **rootfs**：指定了image所包含的filesystem layers，type的值必须是layers，diff_ids包含了layer的列表，从上到下分别对应从底到上的layer，每一个sha256就是每层layer对应tar包的sha256码
+* **rootfs**：指定了image所包含的filesystem layers，type的值必须是layers，diff_ids包含了layer的列表（顺序排列），每一个sha256就是每层layer对应tar包的sha256码
 
 ### manifest
 [manifest](https://github.com/opencontainers/image-spec/blob/master/manifest.md)也是一个json文件，media type为```application/vnd.oci.image.manifest.v1+json```，这个文件包含了对前面filesystem layers和image config的描述，一看官方网站给出的示例就明白了：
@@ -202,9 +202,9 @@ image index是v1.0.0-rc5才加进来的一个文件，还不稳定，后面可�
   }
 }
 ```
-index文件包含了对image中所有manifest的描述，相对于一个manifest列表，包括每个manifest的media type，文件大小，sha256码，支持的平台以及平台特殊的配置。
+index文件包含了对image中所有manifest的描述，相当于一个manifest列表，包括每个manifest的media type，文件大小，sha256码，支持的平台以及平台特殊的配置。
 
-比如ubuntu想让它的image支持amd64和arm64平台，于是它在两个平台上都进行了编译，然后将两个平台的layer都放到这个filesystem layers里面，然后写两个config文件和两个manifest文件，再加上这样一个描述不同平台manifest的index文件，就可以让这个image支持两个平台了，两个平台的用户可以使用同样的命令得到自己平台想要的那些layer。
+比如ubuntu想让它的image支持amd64和arm64平台，于是它在两个平台上都编译好相应的包，然后将两个平台的layer都放到这个image的filesystem layers里面，然后写两个config文件和两个manifest文件，再加上这样一个描述不同平台manifest的index文件，就可以让这个image支持两个平台了，两个平台的用户可以使用同样的命令得到自己平台想要的那些layer。
 
 >image index最新的标准里面并没有涉及到tag，不过估计后续会加上。
 
@@ -249,7 +249,7 @@ dev@debian:~/images/hello-world$ cat ./oci-layout| jq .
 ```
 
 #### refs
-里面的每个文件就是一个tag（hello-world的image中只有一个latest tag），每个tag都是一个单独的image，相当于一个image的包里面可以包含多个有关系的image，文件的内容如下：
+里面的每个文件就是一个tag（hello-world的image中只有一个latest tag），每个tag都是一个单独的image，相当于一个image的layout包里面可以包含多个有关系的image，文件的内容如下：
 ```
 dev@debian:~/images/hello-world$ cat ./refs/latest | jq .
 {
@@ -275,13 +275,13 @@ dev@debian:~/images/hello-world$ sha256sum ./blobs/sha256/*
 ```
 
 ## 下载image
-上面介绍image layout时的image是从哪里来的呢？
+上面介绍image layout时用到了hello-world的image，它是从哪里来的呢？
 
 为了快速的构建container的rootfs，docker在本地有它自己的一套image管理方式，有自己的layout，并且目前```docker save```命令也不支持导出OCI格式的image，只能导出docker自己的格式，所以我们只能借助其它的工具得到OCI格式的image。
 
-这里我们用[skopeo](https://github.com/projectatomic/skopeo)来演示一下从docker hub上拉取image，并把它在本地存成OCI的layout。
+这里我们用[skopeo](https://github.com/projectatomic/skopeo)来演示一下从docker hub上拉取hello-world的image，并把它在本地存成OCI的layout。
 
->这里生成的layout和最新版本的标准有点差别，和v1.0.0-rc4的标准一致，如果你用同样的命令得到不一样的layout，说明skopeo有更新，支持了更新的标准，
+>这里生成的layout和最新版本的标准有点差别，和v1.0.0-rc4的标准一致，如果你用同样的命令得到不一样的layout，说明skopeo有更新，支持了更新的标准。
 
 ```
 #这里的所有命令在debian 8.6的环节上运行通过
@@ -311,4 +311,4 @@ hello-world/
 
 ## 参考
 
-* [Image Format Specification](https://github.com/opencontainers/image-spec/blob/master/spec.md)
+* [OCI Image Format Specification](https://github.com/opencontainers/image-spec)

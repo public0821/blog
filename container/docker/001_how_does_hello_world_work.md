@@ -1,6 +1,6 @@
-# hello-world的背后发生了什么？
+# 走进docker系列(01)：hello-world的背后发生了什么？
 
-在程序员的世界里，hello world是个很特殊的存在，当我们接触一门新的语言、新的开发库或者框架时，第一时间想了解的一般都是怎么实现一个hello world，然后思考hello world的背后发生了什么，在学习docker的时候，我们也是同样的思路，本篇将会介绍hello world背后的故事
+在程序员的世界里，hello world是个很特殊的存在，当我们接触一门新的语言、新的开发库或者框架时，第一时间想了解的一般都是怎么实现一个hello world，然后思考hello world的背后发生了什么，在学习docker的时候，也是同样的思路，本篇将会介绍hello world背后的故事
 
 ## 运行hello world
 
@@ -35,11 +35,11 @@ hello-world这个容器运行的时候就是打印上面一段话到终端，然
                               +------------+
                                     ↑
                                     |
-                                  2 | Restful
+                                  2 | REST
                                     |
                                     ↓
                                +---------+
-+--------+       Restful       |         |    grpc      +-------------------+
++--------+       REST          |         |    grpc      +-------------------+
 | docker |<------------------->| dockerd |<------------>| docker-containerd |
 +--------+         1           |         |      3       +-------------------+
                                +---------+                       ↑
@@ -55,15 +55,73 @@ hello-world这个容器运行的时候就是打印上面一段话到终端，然
                                                                                          +-------+
                                                                                          | hello |
                                                                                          +-------+
+
 ```
 
 ## 步骤过程
 ### 1. docker <--> dockerd
-docker进程是docker客户端，dockerd进程是docker服务器端，这里的第一步是docker通过rest的方式发送请求给dockerd。
+docker进程是docker客户端，dockerd进程是docker服务器端，它们的代码都在[moby](https://github.com/moby/moby)项目里面。
 
-当在shell里面运行```docker run hello-world```时，docker程序被启动，这个程序就是docker的客户端，它的任务就是解析命令行参数，然后构造相应的rest请求给dockerd，Engine API里描述了dockerd支持的所有请求，docker v17.03.0对应的API版本为[v1.26](https://docs.docker.com/engine/api/v1.26/)，而docker v17.03.1对应的版本为[v1.27](https://docs.docker.com/engine/api/v1.27/)，API版本之间的差别可以参考[version-history](https://docs.docker.com/engine/api/version-history/)。
+当在shell里面运行```docker run hello-world```后，docker程序被启动，这个程序就是docker的客户端，它的任务就是解析命令行参数，然后构造相应的启动容器请求，通过rest的方式发给dockerd。
 
-运行hello world就相当于下面的curl命令：
+Engine API里描述了dockerd支持的所有请求，docker v17.03.0对应的API版本为[v1.26](https://docs.docker.com/engine/api/v1.26/)，而docker v17.03.1对应的版本为[v1.27](https://docs.docker.com/engine/api/v1.27/)，API版本之间的差别可以参考[version-history](https://docs.docker.com/engine/api/version-history/)。
+
+### 2. dockerd <--> "docker hub"
+当dockerd收到客户端的运行容器请求后，发现本地没有相应的镜像（image），就会从[docker hub](https://registry-1.docker.io/v2)取相应image。（实际过程要比这个步骤多，这里为了简单直观，省略掉了其它的步骤，后面有详细的说明）
+
+docker hub是docker官方存放镜像（image）的服务器，dockerd和它之间也是使用rest接口，协议为[Registry HTTP API V2](https://docs.docker.com/registry/spec/api/)。如果需要登录的话，比如访问自己的私有仓库，那么需要访问[index](https://index.docker.io/v1)进行身份验证。
+
+取image的大概过程如下：
+
+* 首先获取image的manifests，manifests里面包含两部分内容，一是image的配置文件的digest(sha256)，另一个是image包含的所有filesystem layer的digest(sha256)
+* 根据上一步得到的image的配置文件的digest，在本地找是否已经存在对应的image，如果已经存在的话，就不用再往下走了，用现成的就可以了，如果没有，则继续
+* 遍历manifests里面的所有layer，根据其digest在本地找，如果找到对应的layer，则跳过当前layer，否则从服务器取相应layer的压缩包
+* 等上面的所有步骤完成后，就会拼出完整的image
+
+> 这里的每个layer都是相对于上一个文件系统layer的变化情况。
+> 从上面的过程可以看出，docker只会拉取本地没有的layer。
+
+### 3. dockerd <--> docker-containerd
+dockerd拿到image后，就会在本地创建相应的容器，然后再做一些初始化工作后，最后通过grpc的方式通知docker-containerd进程启动指定的容器
+
+docker-containerd是和dockerd一起启动的后台进程，他们之间使用unix socket通信，协议是[grpc](http://www.grpc.io/).
+
+### 4. docker-containerd <--> docker-containerd-shim
+docker-containerd和docker-containerd-shim都属于[containerd](https://github.com/containerd/containerd)项目，当docker-containerd收到dockerd的启动容器请求之后，会做一些初始化工作，然后启动docker-containerd-shim进程，并将相关配置所在的目录作为参数传给它。
+
+可以简单的理解成docker-containerd管理所有本机正在运行的容器，而docker-containerd-shim只负责管理一个运行的容器，相当于是对runc的一个包装，充当containerd和runc之间的桥梁，runc能干的就交给runc来做，runc做不了的就放到这里来做。
+
+### 5. docker-containerd-shim <--> docker-runc
+docker-containerd-shim进程启动后，就会按照runtime的标准准备好相关运行时环境，然后启动docker-runc进程。
+
+>docker-runc就是runc程序的重命名，它们是相等的，若无特殊情况，后面介绍中不区分docker-runc和runc
+
+[image](https://github.com/opencontainers/image-spec)和[runtime](https://github.com/opencontainers/runtime-spec)标准都由[Open Container Initiative](https://www.opencontainers.org)（OCI）负责定义维护，而[runc](https://github.com/opencontainers/runc)就是docker贡献给OCI的一个标准runtime实现。
+
+如何启动runc是公开的标准，大概过程就是准备好rootfs和配置文件，然后使用合适的参数启动runc进程就可以了。
+
+### 6. docker-runc <--> hello
+runc进程打开容器的配置文件，找到rootfs的位置，并启动配置文件中指定的相应进程，在hello-world的这个例子中，runc会启动容器中的hello程序。
+
+到此为止，容器启动成功。
+
+## 进程间的关系
+等runc将容器启动起来后，runc进程就退出了，于是容器里面的第一个进程（hello）的父进程就变成了docker-containerd-shim，在pstree的输出里面，进程树的关系大概如下：
+```
+systemd───dockerd───docker-containerd───docker-containerd-shim───hello
+```
+
+>实际操作过程中可能看不到这样的输出，因为hello很快就运行退出了，接着docker-containerd-shim也退出了。
+
+其中dockerd和docker-containerd是后台常驻进程，而docker-containerd-shim则由docker-containerd按需启动。
+
+>runc退出后其子进程hello不是应该由init进程接管吗？怎么就变成了docker-containerd-shim的子进程了呢？这是因为从Linux 3.4开始，[prctl](http://man7.org/linux/man-pages/man2/prctl.2.html)增加了对PR_SET_CHILD_SUBREAPER的支持，这样就可以控制孤儿进程可以被谁接管，而不是像以前一样只能由init进程接管。
+
+## 输出
+hello进程启动之后，往标准输出打印一段话后就退出了，那这个标准输出输出到哪里去了呢？docker客户端是怎么得到这段话的呢？这就取决于docker将这个标准输出重定向到哪里去了，以及它是怎么管理容器的这些输出的，这涉及到docker的日志管理方式，该部分内容会在后续做详细介绍，这里只需要知道容器的标准输出的内容能被docker的这些进程一层一层的转发给客户端就行了。
+
+## 详细步骤
+上面介绍的是一个精简版的hello world运行步骤，实际过程要多几个回合，下面用curl命令来模拟一下实际的操作流程：
 ```bash
 #这里假设已经配置了dockerd监听本地tcp端口2375
 
@@ -137,53 +195,7 @@ dev@debian:~$ curl 127.0.0.1:2375/v1.27/containers/2a4717ffb830bf4cff12ef6e6f1e9
 * 客户端再次发送创建容器请求给dockerd，dockerd收到会根据拿到的image创建一个新容器，并初始化容器运行时要用到的相关目录和配置文件，里面就包含了rootfs，容器创建完成后，dockerd返回容器的ID给客户端。
 * 客户端发启动容器请求给dockerd，dockerd收到请求后，会通知docker-containerd启动容器，启动成功后返回成功给客户端。
 
-### 2. dockerd <--> "docker hub"
-
-docker hub是docker官方存放镜像（image）的服务器，当dockerd收到客户端的创建image请求后就会向[docker hub](https://registry-1.docker.io/v2)要相应image，它们之间也是使用rest接口，协议为[Registry HTTP API V2](https://docs.docker.com/registry/spec/api/)。如果需要登录的话，比如访问自己的私有仓库，那么需要访问[index](https://index.docker.io/v1)进行身份验证。
-
-取image的大概过程如下：
-
-* 首先获取image的manifests，manifests里面包含两部分内容，一是image的配置文件的digest(sha256)，另一个是image包含的所有filesystem layer的digest(sha256)
-* 根据上一步得到的image的配置文件的digest，在本地找是否已经存在对应的image，如果已经存在的话，就不用再往下走了，用现成的就可以了，如果没有，则继续
-* 遍历manifests里面的所有layer，根据其digest在本地找，如果找到对应的layer，则跳过当前layer，否则从服务器取相应layer的压缩包
-* 等上面的所有步骤完成后，就会拼出完整的image
-
-> 这里的每个layer都是相对于上一个文件系统layer的变化情况。
-> 从上面的过程可以看出，docker只会拉取本地没有的layer。
-
-### 3. dockerd <--> docker-containerd
-docker-containerd是和dockerd一起启动的后台进程，他们之间使用unix socket通信，协议是[grpc](http://www.grpc.io/).
-
-等dockerd把容器创建好了之后，接着会收到客户端的启动容器请求，dockerd在做了一些初始化工作后，就会通过grpc的方式通知docker-containerd进程启动指定的容器
-
-### 4. docker-containerd <--> docker-containerd-shim
-docker-containerd和docker-containerd-shim都属于[containerd](https://github.com/containerd/containerd)项目，当docker-containerd收到dockerd的启动容器请求之后，会做一些初始化工作，然后启动docker-containerd-shim进程，并将相关配置所在的目录作为参数传给它。
-
-可以简单的理解成docker-containerd管理所有本机正在运行的容器，而docker-containerd-shim只负责管理一个运行的容器，相当于是对runc的一个包装，充当containerd和runc之间的桥梁，runc能干的就交给runc来做，runc做不了的就放到这里来做。
-
-### 5. docker-containerd-shim <--> runc
-opencontainer定义了容器的[image](https://github.com/opencontainers/image-spec)和[runtime](https://github.com/opencontainers/runtime-spec)标准，而[runc](https://github.com/opencontainers/runc)就是docker贡献给opencontainer的标准runtime的一个实现。
-
-docker-containerd-shim进程启动后，就会按照runtime的标准准备好相关运行时环境，然后启动runc进程。
-
-如何启动runc是公开的标准，大概过程就是准备好rootfs和配置文件，然后使用合适的参数启动runc进程就可以了。
-
-### 6. runc <--> hello
-runc打开容器的配置文件，找到要启动的程序，然后启动相应进程，在hello-world的这个例子中，runc会启动容器中的hello程序。
-
-到此为止，容器启动成功。
-
-## 进程间的关系
-等runc将容器启动起来后，runc进程就退出了，于是容器里面的第一个进程（hello）的父进程就变成了docker-containerd-shim，在pstree的输出里面，进程树的关系大概如下：
-```
-systemd───dockerd───docker-containerd───docker-containerd-shim───hello
-```
-其中dockerd和docker-containerd是后台常驻进程，而docker-containerd-shim则由docker-containerd按需启动。
-
->runc退出后其子进程hello不是应该由init进程接管吗？怎么就变成了docker-containerd-shim的子进程了呢？这是因为从Linux 3.4开始，[prctl](http://man7.org/linux/man-pages/man2/prctl.2.html)增加了对PR_SET_CHILD_SUBREAPER的支持，这样就可以控制孤儿进程可以被谁接管，而不是像以前一样只能由init进程接管。
-
-## 输出
-hello进程启动之后，往标准输出打印一段话后就退出了，那这个标准输出输出到哪里去了呢？docker客户端是怎么得到这段话的呢？这就取决于docker将这个标准输出重定向到哪里去了，以及它是怎么管理容器的这些输出的，这涉及到docker的日志管理方式，该部分内容会在后续做详细介绍，这里只需要知道容器的标准输出的内容能被docker的这些进程一层一层的转发给客户端就行了。
+>dockerd去docker hub上取image发生在这里的3~4步之间，而docker-containerd───docker-containerd-shim───hello这些事发生在这里的7~8步之间。
 
 ## 结束语
 本文大概的介绍了一下hello-world是如何工作的，以及涉及了docker的哪些进程，里面还有大量的细节没有涉及，留给后续文章做进一步介绍。

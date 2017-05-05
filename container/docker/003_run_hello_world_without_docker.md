@@ -1,4 +1,4 @@
-# 试玩image
+# 走进docker系列(03)：如何绕过docker运行hello-world？
 
 上一篇介绍了image的格式，这里我们就来用一下hello-world这个image，看怎么输出和```docker run hello-world```同样的内容。
 
@@ -9,7 +9,7 @@
 * oci-image-tools： 包含几个用来操作本地image的工具
 * runc： 运行容器
 
-runc可以用docker自带的docker-runc命令替代，效果是一样的，skopeo的安装可以参考[上一篇最后的介绍]()或者[github上的主页](https://github.com/projectatomic/skopeo)，oci-image-tools的安装请参考[github上的主页](https://github.com/opencontainers/image-tools)。
+runc可以用docker自带的docker-runc命令替代，效果是一样的，skopeo的安装可以参考[上一篇]()最后的介绍或者[github上的主页](https://github.com/projectatomic/skopeo)，oci-image-tools的安装请参考[github上的主页](https://github.com/opencontainers/image-tools)。
 
 ## 获取hello-world的image
 利用skopeo获得hello-world的oci格式的image
@@ -73,7 +73,8 @@ dev@debian:~/images/hello-world-bundle$ docker-runc spec
 
 #默认生成的config里面指定容器启动的进程为sh，
 #我们需要将它换成我们的hello程序
-#这里用vim修改config.json文件，将里面的"args": ["sh"]改成"args": ["/hello"]
+#这里请用自己熟悉的编辑器修改config.json文件，
+#将里面的"args": ["sh"]改成"args": ["/hello"]
 dev@debian:~/images/hello-world-bundle$ vim config.json
 
 #然后用runc运行该容器，这里命令行里的hello是给容器取的名字，
@@ -102,4 +103,4 @@ For more examples and ideas, visit:
 ```
 
 ## 结束语
-该篇展示了如何不通过docker而运行docker的hello-world容器，主要目的为了了解镜像以及runc之间的关系，同时也触发我们思考一个问题，既然我们可以绕过docker运行容器，那我们为什么还要用docker呢？
+该篇展示了如何不通过docker而运行hello-world容器，主要目的为了了解镜像以及runc之间的关系，同时也触发我们思考一个问题，既然我们可以绕过docker运行容器，那我们为什么还要用docker呢？
