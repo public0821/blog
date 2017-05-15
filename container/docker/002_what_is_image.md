@@ -1,4 +1,4 @@
-# 走进docker系列(02)：image(镜像)是什么？
+# 走进docker(02)：image(镜像)是什么？
 
 上一篇介绍了hello-world的大概流程，那么hello-world的image里面到底包含了些什么呢？里面的格式是怎么样的呢？
 

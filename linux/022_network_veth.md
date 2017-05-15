@@ -135,7 +135,7 @@ listening on veth1, link-type EN10MB (Ethernet), capture size 262144 bytes
 看看数据包的流程就明白了：
 
 1. ping进程构造ICMP echo请求包，并通过socket发给协议栈，
-2. 由于ping程序指定了走veth0，并且本地ARP缓存里面有所有本地设备的记录，所以不用发送ARP出去，协议栈就直接将该数据包交给了veth0
+2. 由于ping程序指定了走veth0，并且本地ARP缓存里面已经有了相关记录，所以不用再发送ARP出去，协议栈就直接将该数据包交给了veth0
 3. 由于veth0的另一端连的是veth2，所以ICMP echo请求包就转发给了veth1
 4. veth1收到ICMP echo请求包后，转交给另一端的协议栈
 5. 协议栈一看自己的设备列表，发现本地有192.168.2.1这个IP，于是构造ICMP echo应答包，准备返回

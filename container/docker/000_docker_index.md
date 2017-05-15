@@ -41,16 +41,11 @@ docker完整的变更列表请参考[这里](https://github.com/moby/moby/blob/m
 >注意：若没有特别说明，本系列提到的docker源码，都指的是moby的代码
 
 ## 文章列表
-该系列的所有文章都会列在这里，便于大家选择阅读
-
->尽量保证每周至少更新一篇，这里列出来但没有链接的表示即将要写的内容，敬请期待
+该系列的所有文章都会列在这里，便于大家选择阅读，本人尽量保证每周至少更新一篇
 
 * 走进docker系列(01)：hello-world的背后发生了什么？
 * 走进docker系列(02)：image(镜像)是什么？
 * 走进docker系列(03)：如何绕过docker运行hello-world？
-* 走进docker系列(04)：什么是容器的runtime?
-* 走进docker系列(05)：runc能干些啥?
-* 走进docker系列(06)：如何给容器配置网络?
 
 ## 建议阅读
 在阅读本系列之前，如果对Linux不是很熟的话，建议先阅读本人的[Linux程序员](https://segmentfault.com/blog/wuyangchun)专栏，里面包含了内存、CPU、文件系统、网络、namespace、cgroup等方面的详细内容，和docker相关的Linux知识还在更新中，敬请关注。
@@ -90,7 +85,7 @@ dev@debian:~/repos/docker$ egrep "runc.git|containerd.git" ./hack/dockerfile/ins
 ```
 根据上面的结果，先将runc和containerd克隆下来，然后checkout相应的commit id，这样就可以配合docker的代码一起看了。这里是上面例子中找到的containerd和runc的信息：
 
-* containerd： https://github.com/docker/containerd.git  4ab9917febca54791c5f071a9d1f404867857fcc
+* containerd： https://github.com/docker/containerd.git 4ab9917febca54791c5f071a9d1f404867857fcc
 * runc： https://github.com/docker/runc.git 54296cf40ad8143b62dbcaa1d90e520a2136ddfe
 
 **注意：**
