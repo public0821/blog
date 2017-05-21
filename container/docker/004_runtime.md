@@ -12,7 +12,7 @@
 下面分别介绍这些规范。
 
 ### [Filesystem Bundle](https://github.com/opencontainers/runtime-spec/blob/master/bundle.md)
-其实在[上一篇]()中，已经用过bundle了，hello-world的bundle看起来是这个样子的：
+其实在[上一篇](https://segmentfault.com/a/1190000009309378)中，已经用过bundle了，hello-world的bundle看起来是这个样子的：
 ```bash
 dev@debian:~/images$ tree hello-world-bundle
 hello-world-bundle
@@ -25,18 +25,18 @@ hello-world-bundle
 
 bundle中包含了需要运行容器的所有信息，有了这个bundle后，符合runtime标准的程序（比如runc）就可以根据bundle启动容器了。
 
-bundle包含一个config.json文件和容器的根文件系统目录，config.json就是后面要介绍的[Container Configuration file](https://github.com/opencontainers/runtime-spec/blob/master/config.md)，标准要求该配置文件必须叫这个名字，不过对容器的根文件系统目录没有要求，只要在config.json将路径配置正确就可以了，不过一般约定俗成都叫rootfs。
+bundle包含一个config.json文件和容器的根文件系统目录，config.json就是后面要介绍的[Container Configuration file](https://github.com/opencontainers/runtime-spec/blob/master/config.md)，标准要求该配置文件必须叫这个名字，不过对容器的根文件系统目录没有要求，只要在config.json里面将路径配置正确就可以了，不过一般约定俗成都叫rootfs。
 
 实际使用过程中，根文件系统目录可能在其它的地方，只要config.json里面配置正确的路径就可以了，但如果bundle需要打包和其它人分享的话，必须将根文件系统和config.json打包在一起，并且不包含外层的文件夹。
 
 ### [Container Configuration file](https://github.com/opencontainers/runtime-spec/blob/master/config.md)
-该规范定义了上面介绍的config.json里面应该包含哪些内容，字段很多，这里不介绍细节，只列出一些重要的内容。
+该规范定义了上面介绍的config.json里面应该包含哪些内容，字段很多，这里不一一介绍，只列出一些重要的内容。
 
 ### [Linux Container Configuration](https://github.com/opencontainers/runtime-spec/blob/master/config-linux.md)
 该规范是Linux平台上对[Container Configuration file](https://github.com/opencontainers/runtime-spec/blob/master/config.md)的补充，这部分的内容也包含在上面的config.json文件中。
 
 ### [Runtime and Lifecycle](https://github.com/opencontainers/runtime-spec/blob/master/runtime.md)
-该规范主要定义了容器的三方面内容，容器相关的操作、生命周期以及容器的状态。
+该规范主要定义了根容器相关的三部分内容，容器相关的操作、生命周期以及容器的状态。
 #### 容器相关的操作
 该部分定义了一个符合runtime标准的实现（如runc）至少需要实现下面这些命令：
 
