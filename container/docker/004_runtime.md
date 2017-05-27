@@ -2,7 +2,7 @@
 
 我们都知道runc是容器runtime的一个实现，那到底什么是runtime？包含了哪些内容？
 
-容器的runtime和image一样，也有规范，也由[Open Containers Initiative](https://www.opencontainers.org/)(OCI)负责维护，地址为[Runtime Specification](https://github.com/opencontainers/runtime-spec/blob/master/spec.md)，本文将对该标准做一个简单的解释。
+容器的runtime和image一样，也有标准，也由[OCI (Open Containers Initiative)](https://www.opencontainers.org/)负责维护，地址为[Runtime Specification](https://github.com/opencontainers/runtime-spec/blob/master/spec.md)，了解runtime标准便于我们更好的理解docker和runc的关系，本文将对该标准做一个简单的解释。
 
 ## 规范内容
 在Linux平台上，跟runtime有关的规范主要有四个，分别是[Runtime and Lifecycle (runtime.md)](https://github.com/opencontainers/runtime-spec/blob/master/runtime.md)、[Container Configuration file (config.md)](https://github.com/opencontainers/runtime-spec/blob/master/config.md)、[Linux Container Configuration (config-linux.md)](https://github.com/opencontainers/runtime-spec/blob/master/config-linux.md)和[Linux Runtime (runtime-linux.md)](https://github.com/opencontainers/runtime-spec/blob/master/runtime-linux.md) .
@@ -23,9 +23,9 @@ hello-world-bundle
 1 directory, 2 files
 ```
 
-bundle中包含了需要运行容器的所有信息，有了这个bundle后，符合runtime标准的程序（比如runc）就可以根据bundle启动容器了。
+bundle中包含了运行容器所需要的所有信息，有了这个bundle后，符合runtime标准的程序（比如runc）就可以根据bundle启动容器了。
 
-bundle包含一个config.json文件和容器的根文件系统目录，config.json就是后面要介绍的[Container Configuration file](https://github.com/opencontainers/runtime-spec/blob/master/config.md)，标准要求该配置文件必须叫这个名字，不过对容器的根文件系统目录没有要求，只要在config.json里面将路径配置正确就可以了，不过一般约定俗成都叫rootfs。
+bundle包含一个config.json文件和容器的根文件系统目录，config.json就是后面要介绍的```Container Configuration file```，标准要求该配置文件必须叫这个名字，不过对容器的根文件系统目录没有要求，只要在config.json里面将路径配置正确就可以了，不过一般约定俗成都叫rootfs。
 
 实际使用过程中，根文件系统目录可能在其它的地方，只要config.json里面配置正确的路径就可以了，但如果bundle需要打包和其它人分享的话，必须将根文件系统和config.json打包在一起，并且不包含外层的文件夹。
 
@@ -38,9 +38,9 @@ bundle包含一个config.json文件和容器的根文件系统目录，config.js
 * process：容器启动后执行什么命令
 * hostname：容器的主机名，相关原理可参考[UTS namespace (CLONE_NEWUTS)](https://segmentfault.com/a/1190000006908598)
 * platform（必须）：平台信息，如 amd64 + Linux
-* linux：Linux平台的特殊配置，这里包含下面要介绍的[Linux Container Configuration](https://github.com/opencontainers/runtime-spec/blob/master/config-linux.md)里面的内容
-* hooks：配置容器运行生命周期中会调用的hooks，包括prestart、poststart和poststop，容器的生命周期见后面[Runtime and Lifecycle](https://github.com/opencontainers/runtime-spec/blob/master/runtime.md)介绍。
-* annotations：相当于容器的属性信息，key:value格式
+* linux：Linux平台的特殊配置，这里包含下面要介绍的```Linux Container Configuration```里面的内容
+* hooks：配置容器运行生命周期中会调用的hooks，包括prestart、poststart和poststop，容器的生命周期见后面```Runtime and Lifecycle```介绍。
+* annotations：容器的注释，相当于容器标签，key:value格式
 
 ### [Linux Container Configuration](https://github.com/opencontainers/runtime-spec/blob/master/config-linux.md)
 该规范是Linux平台上对[Container Configuration file](https://github.com/opencontainers/runtime-spec/blob/master/config.md)的补充，这部分的内容也包含在上面的config.json文件中。
@@ -59,16 +59,59 @@ bundle包含一个config.json文件和容器的根文件系统目录，config.js
 * mountLabel：和Selinux有关。
 
 ### [Runtime and Lifecycle](https://github.com/opencontainers/runtime-spec/blob/master/runtime.md)
-该规范主要定义了根容器相关的三部分内容，容器相关的操作、生命周期以及容器的状态。
+该规范主要定义了跟容器相关的三部分内容，容器的状态、容器相关的操作以及容器的生命周期。
+#### 容器的状态
+当查询容器的状态时，返回的状态里面至少包含如下信息：
+```
+{
+    "ociVersion": "0.2.0",
+    "id": "oci-container1",
+    "status": "running",
+    "pid": 4422,
+    "bundle": "/containers/redis",
+    "annotations": {
+        "myKey": "myValue"
+    }
+}
+```
+
+* ociVersion (必须)： 创建该容器时使用的OCI runtime的版本
+* id (必须): 容器ID，本机全局唯一
+* status (必须): 容器的运行时状态，包含如下状态:
+    ```
+    creating: 创建中
+    created: 创建完成
+    running: 运行中
+    stopped: 运行结束
+
+    实现runtime时可以包含更多的状态，但不能改变这几个状态的含义
+    ```
+* pid (容器是running状态时必须)： 容器内第一个进程在系统初始pid namespace中的pid，即在容器外面看到的pid
+* bundle (REQUIRED)： bundle所在位置的绝对路径。bundle里面包含了容器的配置文件和根文件系统。
+* annotations： 容器的注释，相当于容器标签，来自于容器的配置文件，key：value格式。
+
 #### 容器相关的操作
 该部分定义了一个符合runtime标准的实现（如runc）至少需要实现下面这些命令：
 
-* Create： 
-* Start： 
-* Kill：
-* Delete：
-#### 生命周期
-1. 首先
+* state: 返回容器的状态，包含上面介绍的那些内容.
+* create： 创建容器，这一步执行完成后，容器创建完成，修改bundle中的config.json将不再对已创建的容器产生影响
+* start： 启动容器，执行config.json中process部分指定的进程
+* kill： 通过给容器发送信号来停止容器，信号的内容由kill命令的参数指定
+* delete： 删除容器，如果容器正在运行中，则删除失败。删除操作会删除掉create操作时创建的所有内容。
+
+#### 容器的生命周期
+
+>这里以runc为例，说明容器的生命周期
+
+1. 执行命令```runc create```创建容器，参数中指定bundle的位置以及容器的ID，容器的状态变为creating
+2. runc根据bundle中的config.json，准备好容器运行时需要的环境和资源，但不运行process中指定的进程，这步执行完成之后，表示容器创建成功，修改config.json将不再对创建的容器产生影响，这时容器的状态变成created。
+3. 执行命令```runc start```启动容器
+4. runc执行config.json中配置的prestart钩子
+5. runc执行config.json中process指定的程序，这时容器状态变成了running
+6. runc执行poststart钩子。
+7. 容器由于某些原因退出，比如容器中的第一个进程主动退出，挂掉或者被kill掉等。这时容器状态变成了stoped
+8. 执行命令```runc delete```删除容器，这时runc就会删除掉上面第2步所做的所有工作。
+9. runc执行poststop钩子
 
 ### [Linux Runtime](https://github.com/opencontainers/runtime-spec/blob/master/runtime-linux.md)
 该规范是Linux平台上对[Runtime and Lifecycle](https://github.com/opencontainers/runtime-spec/blob/master/runtime.md)的补充，目前该规范很简单，只要求容器运行起来后，里面必须建立下面这些软连接：
@@ -81,7 +124,7 @@ lrwxrwxrwx    1 root     root            15 May  4 12:32 /dev/stdout -> /proc/se
 ```
 
 ## 结束语
-理解runtime后，就大概知道了docker和runc分别负责什么内容，那就是docker负责准备runtime的bundle，而runc负责运行该bundle，这为进一步详细的了解它们做好了准备。
+简单点说，docker负责准备runtime的bundle，而runc负责运行该bundle。但并不是说docker只要准备根文件系统和配置文件就可以了，比如对于网络，runtime没有做任何要求，只要在config.json中指定network namespace就行了（不指定就新建一个），而至于这个network namespace里面有哪些东西则完全由docker负责，docker需要保证新network namespace里面有合适的设备来和外界通信。
 
 ## 参考
 
