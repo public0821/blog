@@ -124,7 +124,7 @@ image config就是一个json文件，它的media type是```application/vnd.oci.i
 ### manifest
 [manifest](https://github.com/opencontainers/image-spec/blob/master/manifest.md)也是一个json文件，media type为```application/vnd.oci.image.manifest.v1+json```，这个文件包含了对前面filesystem layers和image config的描述，一看官方网站给出的示例就明白了：
 
->manifest文件的sha256就是image的ID
+>manifest文件中config的sha256就是image的ID，即上面image config文件的sha256值，这里是b5b2b2c507a0944348e0303114d8d93aaaa081732b86451d9bce1f432a537bc7
 
 ```
 {

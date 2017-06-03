@@ -2,7 +2,7 @@
 
 我们都知道runc是容器runtime的一个实现，那到底什么是runtime？包含了哪些内容？
 
-容器的runtime和image一样，也有标准，也由[OCI (Open Containers Initiative)](https://www.opencontainers.org/)负责维护，地址为[Runtime Specification](https://github.com/opencontainers/runtime-spec/blob/master/spec.md)，了解runtime标准便于我们更好的理解docker和runc的关系，本文将对该标准做一个简单的解释。
+容器的runtime和image一样，也有标准，也由[OCI (Open Containers Initiative)](https://www.opencontainers.org/)负责维护，地址为[Runtime Specification](https://github.com/opencontainers/runtime-spec/blob/master/spec.md)，了解runtime标准有利于我们更好的理解docker和runc的关系，本文将对该标准做一个简单的解释。
 
 ## 规范内容
 在Linux平台上，跟runtime有关的规范主要有四个，分别是[Runtime and Lifecycle (runtime.md)](https://github.com/opencontainers/runtime-spec/blob/master/runtime.md)、[Container Configuration file (config.md)](https://github.com/opencontainers/runtime-spec/blob/master/config.md)、[Linux Container Configuration (config-linux.md)](https://github.com/opencontainers/runtime-spec/blob/master/config-linux.md)和[Linux Runtime (runtime-linux.md)](https://github.com/opencontainers/runtime-spec/blob/master/runtime-linux.md) .
@@ -30,7 +30,7 @@ bundle包含一个config.json文件和容器的根文件系统目录，config.js
 实际使用过程中，根文件系统目录可能在其它的地方，只要config.json里面配置正确的路径就可以了，但如果bundle需要打包和其它人分享的话，必须将根文件系统和config.json打包在一起，并且不包含外层的文件夹。
 
 ### [Container Configuration file](https://github.com/opencontainers/runtime-spec/blob/master/config.md)
-该规范定义了上面介绍的config.json里面应该包含哪些内容，字段很多，这里不一一介绍，只简单说明一下，完整的示例请参考[这里](https://github.com/opencontainers/runtime-spec/blob/master/config.md#configuration-schema-example)：
+该规范定义了上面介绍的config.json里面应该包含哪些内容，字段很多，这里不一一详细介绍，只简单说明一下，完整的示例请参考[这里](https://github.com/opencontainers/runtime-spec/blob/master/config.md#configuration-schema-example)：
 
 * ociVersion（必须）：对应的OCI标准版本
 * root（必须）：根文件系统的位置
@@ -43,7 +43,7 @@ bundle包含一个config.json文件和容器的根文件系统目录，config.js
 * annotations：容器的注释，相当于容器标签，key:value格式
 
 ### [Linux Container Configuration](https://github.com/opencontainers/runtime-spec/blob/master/config-linux.md)
-该规范是Linux平台上对[Container Configuration file](https://github.com/opencontainers/runtime-spec/blob/master/config.md)的补充，这部分的内容也包含在上面的config.json文件中。
+该规范是Linux平台上对[Container Configuration file](https://github.com/opencontainers/runtime-spec/blob/master/config.md)的扩展，这部分的内容也包含在上面的config.json文件中。
 
 * namespaces: namespace相关的配置，相关原理可参考[Namespace概述](https://segmentfault.com/a/1190000006908272)及这些namespace（[UTS](https://segmentfault.com/a/1190000006908598)、[IPC](https://segmentfault.com/a/1190000006908729)、[mount](https://segmentfault.com/a/1190000006912742)、[pid](https://segmentfault.com/a/1190000006912878)、[network](https://segmentfault.com/a/1190000006912930)、[user 1](https://segmentfault.com/a/1190000006913195)、[user 2](https://segmentfault.com/a/1190000006913499)）。
 * uidMappings，gidMappings：配置主机和容器用户/组之间的对应关系，原理可参考[user namespace](https://segmentfault.com/a/1190000006913195)
@@ -59,7 +59,7 @@ bundle包含一个config.json文件和容器的根文件系统目录，config.js
 * mountLabel：和Selinux有关。
 
 ### [Runtime and Lifecycle](https://github.com/opencontainers/runtime-spec/blob/master/runtime.md)
-该规范主要定义了跟容器相关的三部分内容，容器的状态、容器相关的操作以及容器的生命周期。
+该规范主要定义了跟容器运行时相关的三部分内容，容器的状态、容器相关的操作以及容器的生命周期。
 #### 容器的状态
 当查询容器的状态时，返回的状态里面至少包含如下信息：
 ```
@@ -124,7 +124,9 @@ lrwxrwxrwx    1 root     root            15 May  4 12:32 /dev/stdout -> /proc/se
 ```
 
 ## 结束语
-简单点说，docker负责准备runtime的bundle，而runc负责运行该bundle。但并不是说docker只要准备根文件系统和配置文件就可以了，比如对于网络，runtime没有做任何要求，只要在config.json中指定network namespace就行了（不指定就新建一个），而至于这个network namespace里面有哪些东西则完全由docker负责，docker需要保证新network namespace里面有合适的设备来和外界通信。
+简单点说，docker负责准备runtime的bundle，而runc负责运行该bundle，并管理容器的整个生命周期。
+
+但对于docker来说，并不是只要准备好根文件系统和配置文件就可以了，比如对于网络，runtime没有做任何要求，只要在config.json中指定network namespace就行了（不指定就新建一个），而至于这个network namespace里面有哪些东西则完全由docker负责，docker需要保证新network namespace里面有合适的设备来和外界通信。
 
 ## 参考
 
