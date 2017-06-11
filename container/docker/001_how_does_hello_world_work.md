@@ -67,9 +67,9 @@ docker进程是docker客户端，dockerd进程是docker服务器端，它们的�
 Engine API里描述了dockerd支持的所有请求，docker v17.03.0对应的API版本为[v1.26](https://docs.docker.com/engine/api/v1.26/)，而docker v17.03.1对应的版本为[v1.27](https://docs.docker.com/engine/api/v1.27/)，API版本之间的差别可以参考[version-history](https://docs.docker.com/engine/api/version-history/)。
 
 ### 2. dockerd <--> "docker hub"
-当dockerd收到客户端的运行容器请求后，发现本地没有相应的镜像（image），就会从[docker hub](https://registry-1.docker.io/v2)取相应image。（实际过程要比这个步骤多，这里为了简单直观，省略掉了其它的步骤，后面有详细的说明）
+当dockerd收到客户端的运行容器请求后，发现本地没有相应的镜像（image），就会从[docker hub](https://hub.docker.com/)取相应image。（实际过程要比这个步骤多，这里为了简单直观，省略掉了其它的步骤，后面有详细的说明）
 
-docker hub是docker官方存放镜像（image）的服务器，dockerd和它之间也是使用rest接口，协议为[Registry HTTP API V2](https://docs.docker.com/registry/spec/api/)。如果需要登录的话，比如访问自己的私有仓库，那么需要访问[index](https://index.docker.io/v1)进行身份验证。
+docker hub是docker官方存放镜像（image）的服务器，dockerd和它之间也是使用rest接口，协议为[Registry HTTP API V2](https://docs.docker.com/registry/spec/api/)。
 
 取image的大概过程如下：
 
