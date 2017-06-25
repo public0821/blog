@@ -248,7 +248,7 @@ uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
 * ③： 处于子user namespace中，调用exec后，由于没有映射，系统会去掉当前进程的所有capabilities（这个是exec的机制），所以到这个位置的时候当前进程已经没有任何capabilities了
 * ④： 处于父user namespace中，和①一样。但这里是一个很好的点来设置子user namespace的map文件，如果能在exec执行之前设置好子进程的map文件，exec执行完后当前进程还是有相应的capabilities。但是如果没有在exec执行之前设置好，而是exec之后设置，当前进程还是没有capabilities，就需要再次调用exec后才有。如何在④这个地方设置子进程的map文件需要一点点技巧，可以参考[帮助文件](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)最后面的示例代码。
 
-对于unshare来说，由于没有④，所有没法映射任意账号到子user namespace，这也是为什么unshare命令只能映射当前账号的原因。
+对于unshare来说，由于没有④，所以没法映射任意账号到子user namespace，这也是为什么unshare命令只能映射当前账号的原因。
 
 ##其它
 和pid namespace类似，当在程序中用UNIX domain sokcet将一个user namespace的uid或者gid发送给另一个user namespace中的进程时，内核会自动映射成目的user namespace中对应的uid或者gid。

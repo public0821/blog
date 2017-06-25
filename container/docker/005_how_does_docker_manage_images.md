@@ -202,6 +202,9 @@ root@dev:~# tree -d -L 1 /var/lib/docker/aufs
 
 该目录下有三个子目录，layers里面存放的layer的父子关系，diff目录存放的是每个layer的原始数据，mnt存储的是layer和祖先layer叠加起来的数据。
 
+> 注意：由于docker所采用的文件系统不同，```/var/lib/docker/<storage-driver>```目录下的目录结构及组织方式也会不一样，要具体文件系统具体分析，本文只介绍aufs这种情况。
+> 关于aufs和btrfs的相关特性可以参考[Linux文件系统之aufs](https://segmentfault.com/a/1190000008489207)和[Btrfs文件系统之subvolume与snapshot](https://segmentfault.com/a/1190000008605135)
+
 还是以刚才的第二层layer（fe9a3f...）为例，看看实际的数据：
 
 ```
@@ -239,14 +242,10 @@ root@dev:~# tree /var/lib/docker/aufs/mnt/b656bf5f0688069cd90ab230c029fdfeb852af
 /var/lib/docker/aufs/mnt/b656bf5f0688069cd90ab230c029fdfeb852afcfd0d1733d087474c86a117da3/
 
 0 directories, 0 files
-#为什么是空的呢？这和docker所采用的文件系统有关，
-#对于aufs文件系统来说，它只有在运行容器的时候，才会将多层合并起来，提供一个统一的视图，
-#所以这里看不到这两层合并之后的效果，
-#但如果采用的是btrfs文件系统，这里应该能看到两层合并之后的内容
-
+#为什么是空的呢？这和aufs文件系统有关，
+#它只有在运行容器的时候，才会将多层合并起来，提供一个统一的视图，
+#所以这里看不到这两层合并之后的效果。
 ```
-
->注意：```/var/lib/docker/<storage-driver>```目录下的内容由于所采用的文件系统不同，会有些差别，要具体文件系统具体分析，关于aufs和btrfs的相关特性可以参考[Linux文件系统之aufs](https://segmentfault.com/a/1190000008489207)和[Btrfs文件系统之subvolume与snapshot](https://segmentfault.com/a/1190000008605135)
 
 ## manifest文件去哪了？
 从前面介绍docker pull的过程中得知，docker是先得到manifest，然后根据manifest得到config文件和layer。
@@ -256,7 +255,7 @@ root@dev:~# tree /var/lib/docker/aufs/mnt/b656bf5f0688069cd90ab230c029fdfeb852af
 manifest里面包含的内容就是对config和layer的sha256 + media type描述，目的就是为了下载config和layer，等image下载完成后，manifest的使命就完成了，里面的信息对于image的本地管理来说没什么用，所以docker在本地没有单独的存储一份manifest文件与之对应。
 
 ## 结束语
-本篇介绍了image在本地的存储方式，包括了```/var/lib/docker/image```和```/var/lib/docker/<storage-driver>```这两个目录，但/var/lib/docker/image下面有两个目录没有涉及：
+本篇介绍了image在本地的存储方式，包括了```/var/lib/docker/image```和```/var/lib/docker/aufs```这两个目录，但/var/lib/docker/image下面有两个目录没有涉及：
 
 * /var/lib/docker/image/aufs/imagedb/metadata：里面存放的是本地image的一些信息，从服务器上pull下来的image不会存数据到这个目录，下次有机会再补充这部分内容。
 * /var/lib/docker/image/aufs/layerdb/mounts: 创建container时，docker会为每个container在image的基础上创建一层新的layer，里面主要包含/etc/hosts、/etc/hostname、/etc/resolv.conf等文件，创建的这一层layer信息就放在这里，后续在介绍容器的时候，会专门介绍这个目录的内容。

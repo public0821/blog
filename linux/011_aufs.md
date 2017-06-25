@@ -20,11 +20,11 @@ nodev   aufs
 ##挂载aufs
 选择好相应的参数（参考[帮助文档](http://manpages.ubuntu.com/manpages/xenial/en/man5/aufs.5.html)），调用mount命令即可，示例如下
 ```
-# mount -t aufs -o br=./Branch-0:./Branch-0:./Branch-2 none ./MountPoint
+# mount -t aufs -o br=./Branch-0:./Branch-1:./Branch-2 none ./MountPoint
 ```
 
 * -t aufs： 指定挂载类型为aufs
-* -o br=./Branch-0:./Branch-0:./Branch-2： 表示将当前目录下的Branch-0，Branch-1，Branch-2三个文件夹联合到一起
+* -o br=./Branch-0:./Branch-1:./Branch-2： 表示将当前目录下的Branch-0，Branch-1，Branch-2三个文件夹联合到一起
 * none：aufs不需要设备，只依赖于-o br指定的文件夹，所以这里填none即可
 * ./MountPoint：表示将最后联合的结果挂载到当前的MountPoint目录下，然后我们就可以往这个目录里面读写文件了
 
