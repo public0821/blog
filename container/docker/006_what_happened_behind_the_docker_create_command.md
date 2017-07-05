@@ -1,6 +1,6 @@
 # 走进docker(06)：docker create命令背后发生了什么？
 
-有了image之后，就可以开始创建并启动容器了，平时我们都是用```docker run```命令直接创建并运行一个容器，它的背后其实包含独立的两步，一步是```docker create```创建容器，另一步是```docker start```启动容器，本篇将介绍在```docker create```这一步中，docker做了哪些事情。
+有了image之后，就可以开始创建并启动容器了，平时我们都是用```docker run```命令直接创建并运行一个容器，它的背后其实包含独立的两步，一步是```docker create```创建容器，另一步是```docker start```启动容器，本篇将先介绍在```docker create```这一步中，docker做了哪些事情。
 
 简单点来说，dockerd在收到客户端的创建容器请求后，做了两件事情，一是准备容器需要的layer，二是检查客户端传过来的参数，并和image配置文件中的参数进行合并，然后存储成容器的配置文件。
 
@@ -119,8 +119,8 @@ lrwxrwxrwx 1 root root 12 Jun 25 11:25 mtab -> /proc/mounts
 
 这几个文件都是Linux运行时必须的文件，如果缺少的话会导致某些程序或者库出现异常，所以docker需要为容器准备好这些文件：
 
-* /dev/console: 该文件指向Linux主机的当前控制台，可以通过该文件往控制台打印数据，在容器启动的时候，docker会通过bind mount的方式将主机的/dev/console文件绑定到容器里面的/dev/console上，所以这里需要创建一个空文件，相当于占个坑，作为后续bind mount的目的路径
-* hostname，hosts，resolv.conf：对于每个容器来说，容器内的这几个文件内容都有可能不一样，这里和console一样，也是占个坑，等着docker在外面生成这几个文件，然后通过bind mount的方式将这些文件绑定到容器中的这些位置，即这些文件都会被宿主机中的文件覆盖掉。
+* /dev/console: 在Linux主机上，该文件一般指向主机的当前控制台，有些程序会依赖该文件。在容器启动的时候，docker会为容器创建一个pts，然后通过bind mount的方式将pts绑定到容器里面的/dev/console上，这样在容器里面往这个文件里面写东西就相当于往容器的控制台上打印数据。这里创建一个空文件相当于占个坑，作为后续bind mount的目的路径。
+* hostname，hosts，resolv.conf：对于每个容器来说，容器内的这几个文件内容都有可能不一样，这里也只是占个坑，等着docker在外面生成这几个文件，然后通过bind mount的方式将这些文件绑定到容器中的这些位置，即这些文件都会被宿主机中的文件覆盖掉。
 * /etc/mtab：这个文件在新的Linux发行版中都指向/proc/mounts，里面包含了当前mount namespace中的所有挂载信息，很多程序和库会依赖这个文件。
 
 >注意： 这里mtab指向的路径是固定的，但内容是变化的，取决于你从哪里打开这个文件，当在宿主机上打开时，是宿主机上/proc/mounts的内容，当启动并进入容器后，在容器中打开看到的就是容器中/proc/mounts的内容。
