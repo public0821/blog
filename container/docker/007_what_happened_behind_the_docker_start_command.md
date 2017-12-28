@@ -330,7 +330,7 @@ root@dev:/run/runc/967438113fba0b7a3005bcb6efae6a77055d6be53945f30389888802ea8b0
 }
 ```
 
-> 如果我们平时单独的调用runc命令的话，可以将创建容器和启动容器这两步合并成一步，那就是```runc run```，具体启动方法可参考[走进docker(03)：如何绕过docker运行hello-world？](https://segmentfault.com/a/1190000009309378)中关于runc运行bundle的介绍。
+> 如果我们平时单独的调用runc命令的话，可以将创建容器和启动容器这两步合并成一步，那就是```runc run```，具体启动方法可参考[“走进docker(03)：如何绕过docker运行hello-world？”](https://segmentfault.com/a/1190000009309378)中关于runc运行bundle的介绍。
 
 
 ## 结束语
