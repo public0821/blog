@@ -83,7 +83,7 @@ subdir01
 ## Shared subtrees
 在某些情况下，比如系统添加了一个新的硬盘，这个时候如果mount namespace是完全隔离的，想要在各个namespace里面用这个硬盘，就需要在每个namespace里面手动mount这个硬盘，这个是很麻烦的，这时[Shared subtrees](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt)就可以帮助我们解决这个问题。
 
-关于Shared subtrees的详细介绍请参考[Linux mount (第二部分)](https://segmentfault.com/a/1190000006899213)，里面有他的详细介绍以及bind nount的例子。
+关于Shared subtrees的详细介绍请参考[Linux mount (第二部分)](/linux/003_mount_02.md)，里面有他的详细介绍以及bind nount的例子。
 
 ### 演示
 对Shared subtrees而言，mount namespace和bind mount的情况差不多，这里就简单演示一下shared和private两种类型

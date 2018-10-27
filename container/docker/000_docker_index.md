@@ -53,7 +53,7 @@ docker完整的变更列表请参考[这里](https://github.com/moby/moby/blob/m
 * [走进docker(10)：如何读docker的代码？](010_how_to_read_code.md)
 
 ## 建议阅读
-在阅读本系列之前，如果对Linux不是很熟的话，建议先阅读本人的[Linux程序员](https://segmentfault.com/blog/wuyangchun)专栏，里面包含了内存、CPU、文件系统、网络、namespace、cgroup等方面的详细内容，和docker相关的Linux知识还在更新中，敬请关注。
+在阅读本系列之前，如果对Linux不是很熟的话，建议先阅读[主目录](/README.md)里面的Linux部分。
 
 ## 获取docker相关的代码
 由于现在docker依赖的containerd和runc是github上两个单独的项目，如果你需要分析docker的代码，请确保containerd和runc的版本和docker的版本是一致的，检查办法如下：

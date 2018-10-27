@@ -298,7 +298,7 @@ dev@ubuntu:~$
 
 ## 其他
 
-* 通常情况下，如果PID namespace中的进程都退出了，这个namespace将会被销毁，但就如在前面[“Namespace概述”](https://segmentfault.com/a/1190000006908272)里介绍的，有两种情况会导致就算进程都退出了，这个namespace还会存在。但对于PID namespace来说，就算namespace还在，由于里面没有“init”进程，Kernel不允许其它进程加入到这个namespace，所以这个存在的namespace没有意义
+* 通常情况下，如果PID namespace中的进程都退出了，这个namespace将会被销毁，但就如在前面[“Namespace概述”](001_namespace_introduction.md)里介绍的，有两种情况会导致就算进程都退出了，这个namespace还会存在。但对于PID namespace来说，就算namespace还在，由于里面没有“init”进程，Kernel不允许其它进程加入到这个namespace，所以这个存在的namespace没有意义
 
 * 当一个PID通过UNIX domain socket在不同的PID namespace中传输时（请参考[unix(7)](http://man7.org/linux/man-pages/man7/unix.7.html)里面的SCM_CREDENTIALS），PID将会自动转换成目的namespace中的PID.
 

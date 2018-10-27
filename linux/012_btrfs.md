@@ -1,6 +1,6 @@
 # Btrfs文件系统之subvolume与snapshot
 
-对于大部分文件系统来说，在磁盘上创建好文件系统，然后再挂载到系统中去就完事了。但对于Btrfs来说，除了在格式化和挂载的时候指定不同的参数外，还支持很多其他的功能，比如管理多块硬盘，支持LVM和RAID等，具体的可以参考它的[官方文档](https://btrfs.wiki.kernel.org/index.php/Main_Page)或者[Linux下常见文件系统对比](https://segmentfault.com/a/1190000008481493)
+对于大部分文件系统来说，在磁盘上创建好文件系统，然后再挂载到系统中去就完事了。但对于Btrfs来说，除了在格式化和挂载的时候指定不同的参数外，还支持很多其他的功能，比如管理多块硬盘，支持LVM和RAID等，具体的可以参考它的[官方文档](https://btrfs.wiki.kernel.org/index.php/Main_Page)或者[Linux下常见文件系统对比](010_file_system_comparison.md)
 
 [Btrfs](https://btrfs.wiki.kernel.org/index.php/Main_Page)是Linux下大家公认的将会替代ext4的下一代文件系统，功能非常强大。本篇不会介绍Btrfs的原理，也不会介绍Btrfs的所有功能，只是挑了其中的subvolume和snapshot这两个特性来进行介绍
 

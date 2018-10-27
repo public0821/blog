@@ -1,6 +1,6 @@
 # Linux Cgroup系列（04）：限制cgroup的内存使用（subsystem之memory）
 
-有了[上一篇](https://segmentfault.com/a/1190000007468509)关于pids的热身之后，我们这篇将介绍稍微复杂点的内存控制。
+有了[上一篇](003_cgroup_pids.md)关于pids的热身之后，我们这篇将介绍稍微复杂点的内存控制。
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
@@ -75,9 +75,9 @@ memory.force_empty     memory.kmem.tcp.failcnt         memory.limit_in_bytes    
 参考：[eventfd](http://man7.org/linux/man-pages/man2/eventfd.2.html)，[numa](https://en.wikipedia.org/wiki/Non-uniform_memory_access)
 
 ### 添加进程
-和[“创建并管理cgroup”](https://segmentfault.com/a/1190000007241437)中介绍的一样，往cgroup中添加进程只要将进程号写入cgroup.procs就可以了
+和[“创建并管理cgroup”](002_cgroup_no_subsystem.md)中介绍的一样，往cgroup中添加进程只要将进程号写入cgroup.procs就可以了
 
->注意：本篇将以进程为单位进行操作，不考虑以线程为单位进行管理（原因见[“创建并管理cgroup”](https://segmentfault.com/a/1190000007241437)中cgroup.pro与tasks的区别），也即只写cgroup.procs文件，不会写tasks文件
+>注意：本篇将以进程为单位进行操作，不考虑以线程为单位进行管理（原因见[“创建并管理cgroup”](002_cgroup_no_subsystem.md)中cgroup.pro与tasks的区别），也即只写cgroup.procs文件，不会写tasks文件
 
 ```bash
 #--------------------------第二个shell窗口----------------------
@@ -354,7 +354,7 @@ disable：echo 0 > memory.move_charge_at_immigrate
 
 >注意: 就算设置为1，但如果不是thread group的leader，这个task占用的内存也不能被迁移过去。换句话说，如果以线程为单位进行迁移，必须是进程的第一个线程，如果以进程为单位进行迁移，就没有这个问题。
 
-当memory.move_charge_at_immigrate被设置成1之后，进程占用的内存将会被统计到目的cgroup中，如果目的cgroup没有足够的内存，系统将尝试回收目的cgroup的部分内存（和系统内存紧张时的机制一样，删除不常用的file backed的内存或者swap out到交换空间上，请参考[Linux内存管理](https://segmentfault.com/a/1190000008125006)），如果回收不成功，那么进程迁移将失败。
+当memory.move_charge_at_immigrate被设置成1之后，进程占用的内存将会被统计到目的cgroup中，如果目的cgroup没有足够的内存，系统将尝试回收目的cgroup的部分内存（和系统内存紧张时的机制一样，删除不常用的file backed的内存或者swap out到交换空间上，请参考[Linux内存管理](/linux/004_memeory_management.md)），如果回收不成功，那么进程迁移将失败。
 
 >注意：迁移内存占用数据是比较耗时的操作。
 
@@ -365,7 +365,7 @@ disable：echo 0 > memory.move_charge_at_immigrate
 当向memory.force_empty文件写入0时（echo 0 > memory.force_empty），将会立即触发系统尽可能的回收该cgroup占用的内存。该功能主要使用场景是移除cgroup前（cgroup中没有进程），先执行该命令，可以尽可能的回收该cgropu占用的内存，这样迁移内存的占用数据到父cgroup或者root cgroup时会快些。
 
 ### memory.swappiness
-该文件的值默认和全局的swappiness（/proc/sys/vm/swappiness）一样，修改该文件只对当前cgroup生效，其功能和全局的swappiness一样，请参考[Linux交换空间](https://segmentfault.com/a/1190000008125116)中关于swappiness的介绍。
+该文件的值默认和全局的swappiness（/proc/sys/vm/swappiness）一样，修改该文件只对当前cgroup生效，其功能和全局的swappiness一样，请参考[Linux交换空间](/linux/005_swap_space.md)中关于swappiness的介绍。
 
 >注意：有一点和全局的swappiness不同，那就是如果这个文件被设置成0，就算系统配置的有交换空间，当前cgroup也不会使用交换空间。
 

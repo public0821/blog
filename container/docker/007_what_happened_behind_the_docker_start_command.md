@@ -1,9 +1,9 @@
 # 走进docker(07)：docker start命令背后发生了什么？
 
-在[上一篇](https://segmentfault.com/a/1190000009769352)介绍过了```docker create```之后，这篇来看看```docker start```是怎么根据create之后的结果运行容器的。
+在[上一篇](006_what_happened_behind_the_docker_create_command.md)介绍过了```docker create```之后，这篇来看看```docker start```是怎么根据create之后的结果运行容器的。
 
 ## 启动容器
-在这里我们先启动[上一篇](https://segmentfault.com/a/1190000009769352)中创建的那个容器，然后看看docker都干了些什么。
+在这里我们先启动[上一篇](006_what_happened_behind_the_docker_create_command.md)中创建的那个容器，然后看看docker都干了些什么。
 ```
 #根据容器名称启动容器（也可以根据容器ID来启动）
 root@dev:~# docker start docker_test
@@ -85,7 +85,7 @@ root@dev:/var/lib/docker/aufs/diff# tree /tmp/rootfs/ | tail
 #有兴趣的话可以参考源代码docker/daemon/graphdriver/aufs/aufs.go中的aufsMount函数。
 ```
 
->关于aufs文件系统的使用可以参考：[Linux文件系统之aufs](https://segmentfault.com/a/1190000008489207)
+>关于aufs文件系统的使用可以参考：[Linux文件系统之aufs](/linux/011_aufs.md)
 
 #### 准备容器内部需要的文件
 rootfs准备好了之后，dockerd接着就会准备一些容器里面需要用到的配置文件，先看看container目录下的变化：
@@ -115,7 +115,7 @@ root@dev:/var/lib/docker/containers# tree 967438113fba0b7a3005bcb6efae6a77055d6b
 >注意：除了日志文件外，其它文件在每次容器启动的时候都会自动生成，所以修改他们的内容后只会在当前容器运行的时候生效，容器重启后，配置又都会恢复到默认的状态
 
 #### 准备OCI需要的bundle
-在[什么是容器的runtime?](https://segmentfault.com/a/1190000009583199)中，介绍过bundle的概念，它主要包含一个名字叫做config.json的配置文件。
+在[什么是容器的runtime?](004_runtime.md)中，介绍过bundle的概念，它主要包含一个名字叫做config.json的配置文件。
 
 dockerd在生成这个文件前，要做一些准备工作，比如创建好cgroup的相关目录，准备网络相关的配置等，然后才生成config.json文件。
 
@@ -290,7 +290,7 @@ starttime:     ASCII text, with no line terminators
 5. 调用runc的start命令启动容器
 
 #### 监听容器
-待容器启动之后，containerd还需要监听容器的OOM事件和容器退出事件，以便及时作出响应，OOM事件通过[cgroup的内存限制](https://segmentfault.com/a/1190000008125359)机制进行监听（通过group.event_control），而容器退出事件通过exit这个命名pipe来实现。
+待容器启动之后，containerd还需要监听容器的OOM事件和容器退出事件，以便及时作出响应，OOM事件通过[cgroup的内存限制](/container/cgroup/004_cgroup_memeory.md)机制进行监听（通过group.event_control），而容器退出事件通过exit这个命名pipe来实现。
 
 >按道理来说如果容器里面的所有进程属于一个pid namespace的话，id为1的进程退出后，容器也就退出了，调用wait函数并传入容器里第一个进程的pid也能知道容器是否退出，不确定为什么containerd一定要弄个exit来监听容器的退出，我没有继续深入研究，可能是因为pipe的fd可以通过epool来统一监听并且是异步，处理起来方便。
 
@@ -330,7 +330,7 @@ root@dev:/run/runc/967438113fba0b7a3005bcb6efae6a77055d6be53945f30389888802ea8b0
 }
 ```
 
-> 如果我们平时单独的调用runc命令的话，可以将创建容器和启动容器这两步合并成一步，那就是```runc run```，具体启动方法可参考[“走进docker(03)：如何绕过docker运行hello-world？”](https://segmentfault.com/a/1190000009309378)中关于runc运行bundle的介绍。
+> 如果我们平时单独的调用runc命令的话，可以将创建容器和启动容器这两步合并成一步，那就是```runc run```，具体启动方法可参考[“走进docker(03)：如何绕过docker运行hello-world？”](003_run_hello_world_without_docker.md)中关于runc运行bundle的介绍。
 
 
 ## 结束语

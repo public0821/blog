@@ -47,7 +47,7 @@ lrwxrwxrwx 1 dev dev 0 7月 7 17:24 uts -> uts:[4026531838]       #(since Linux 
 
 
 ## 跟namespace相关的API
-和namespace相关的函数只有三个，这里简单的看一下，后面介绍[UTS namespace](https://segmentfault.com/a/1190000006908598)的时候会有详细的示例
+和namespace相关的函数只有三个，这里简单的看一下，后面介绍[UTS namespace](002_namespace_uts.md)的时候会有详细的示例
 
 ### [clone](http://man7.org/linux/man-pages/man2/clone.2.html)： 创建一个新的进程并把他放到新的namespace中
 ```c

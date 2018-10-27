@@ -96,7 +96,7 @@ Jan 23 21:30:29 dev kernel: [  490.006871]  [<ffffffff81191442>] oom_kill_proces
 ```
 
 ## cgroup的OOM killer
-除了系统的OOM killer之外，如果配置了memory cgroup，那么进程还将受到自己所属memory cgroup的限制，如果超过了cgroup的限制，将会触发cgroup的OOM killer，cgroup的OOM killer和系统的OOM killer行为略有不同，详情请参考[Linux Cgroup系列（04）：限制cgroup的内存使用](https://segmentfault.com/a/1190000008125359)。
+除了系统的OOM killer之外，如果配置了memory cgroup，那么进程还将受到自己所属memory cgroup的限制，如果超过了cgroup的限制，将会触发cgroup的OOM killer，cgroup的OOM killer和系统的OOM killer行为略有不同，详情请参考[Linux Cgroup系列（04）：限制cgroup的内存使用](/container/cgroup/004_cgroup_memeory.md)。
 
 ## malloc
 malloc是libc的函数，C/C++程序员对这个函数应该都很熟悉，它里面实际上调用的是内核的[sbrk](http://man7.org/linux/man-pages/man2/brk.2.html)和[mmap](http://man7.org/linux/man-pages/man2/mmap.2.html)，为了避免频繁的调用内核函数和优化性能，它里面在内核函数的基础上实现了一套自己的内存管理功能。
@@ -111,7 +111,7 @@ malloc是libc的函数，C/C++程序员对这个函数应该都很熟悉，它�
 * 使用的虚拟地址空间超过了RLIMIT_AS的限制
 * 使用的数据空间超过了RLIMIT_DATA的限制，这里的数据空间包括程序的数据段，BSS段以及heap
 
-关于虚拟地址空间和heap之类的介绍请参考[Linux进程的内存使用情况](https://segmentfault.com/a/1190000008125059)，这两个参数的默认值为unlimited，所以只要不修改它们的默认配置，限制就不会被触发。有一种极端情况需要注意，那就是代码写的有问题，超过了系统的虚拟地址空间范围，比如32位系统的虚拟地址空间范围只有4G，这种情况下不确定系统会以一种什么样的方式返回错误。
+关于虚拟地址空间和heap之类的介绍请参考[Linux进程的内存使用情况](006_process_memory.md)，这两个参数的默认值为unlimited，所以只要不修改它们的默认配置，限制就不会被触发。有一种极端情况需要注意，那就是代码写的有问题，超过了系统的虚拟地址空间范围，比如32位系统的虚拟地址空间范围只有4G，这种情况下不确定系统会以一种什么样的方式返回错误。
 
 ## rlimit
 上面提到的RLIMIT_AS和RLIMIT_DATA都可以通过函数[getrlimit和setrlimit](http://man7.org/linux/man-pages/man2/getrlimit.2.html)来设置和读取，同时linux还提供了一个[prlimit](http://man7.org/linux/man-pages/man1/prlimit.1.html)程序来设置和读取rlimit的配置。

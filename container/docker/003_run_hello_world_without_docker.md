@@ -9,7 +9,7 @@
 * oci-image-tools： 包含几个用来操作本地image的工具
 * runc： 运行容器
 
-runc可以用docker自带的docker-runc命令替代，效果是一样的，skopeo的安装可以参考[上一篇](https://segmentfault.com/a/1190000009309347)最后的介绍或者[github上的主页](https://github.com/projectatomic/skopeo)，oci-image-tools的安装请参考[github上的主页](https://github.com/opencontainers/image-tools)。
+runc可以用docker自带的docker-runc命令替代，效果是一样的，skopeo的安装可以参考[上一篇](002_what_is_image.md)最后的介绍或者[github上的主页](https://github.com/projectatomic/skopeo)，oci-image-tools的安装请参考[github上的主页](https://github.com/opencontainers/image-tools)。
 
 ## 获取hello-world的image
 利用skopeo获得hello-world的oci格式的image

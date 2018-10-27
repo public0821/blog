@@ -39,7 +39,7 @@ user1/ubuntu:16.04 和 user1/ubuntu:@sha256:abcdef...这两种方式也是和上
 对于某些image来说，可能在发布之后还会做一些更新，比如安全方面的，这时虽然镜像的内容变了，但镜像的名称和tag没有变，所以会造成前后两次通过同样的名称和tag从服务器得到不同的两个镜像的问题，于是docker引入了镜像的digest的概念，一个镜像的digest就是镜像的manifes文件的sha256码，当镜像的内容发生变化的时候，即镜像的layer发生变化，从而layer的sha256发生变化，而manifest里面包含了每一个layer的sha256，所以manifest的sha256也会发生变化，即镜像的digest发生变化，这样就保证了digest能唯一的对应一个镜像。
 
 ## docker pull的大概过程
-如果对Image manifest，Image Config和Filesystem Layers等概念不是很了解，请先参考[image(镜像)是什么](https://segmentfault.com/a/1190000009309347)。
+如果对Image manifest，Image Config和Filesystem Layers等概念不是很了解，请先参考[image(镜像)是什么](002_what_is_image.md)。
 
 取image的大概过程如下：
 
@@ -203,7 +203,7 @@ root@dev:~# tree -d -L 1 /var/lib/docker/aufs
 该目录下有三个子目录，layers里面存放的layer的父子关系，diff目录存放的是每个layer的原始数据，mnt存储的是layer和祖先layer叠加起来的数据。
 
 > 注意：由于docker所采用的文件系统不同，```/var/lib/docker/<storage-driver>```目录下的目录结构及组织方式也会不一样，要具体文件系统具体分析，本文只介绍aufs这种情况。
-> 关于aufs和btrfs的相关特性可以参考[Linux文件系统之aufs](https://segmentfault.com/a/1190000008489207)和[Btrfs文件系统之subvolume与snapshot](https://segmentfault.com/a/1190000008605135)
+> 关于aufs和btrfs的相关特性可以参考[Linux文件系统之aufs](/linux/011_aufs.md)和[Btrfs文件系统之subvolume与snapshot](/linux/012_btrfs.md)
 
 还是以刚才的第二层layer（fe9a3f...）为例，看看实际的数据：
 

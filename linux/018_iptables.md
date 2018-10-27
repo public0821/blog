@@ -67,7 +67,7 @@ netfilter和iptables是什么关系？常说的iptables里面的表(table)、链
 * NF_IP_LOCAL_OUT: 本地程序要发出去的数据包刚到IP层，还没进行路由选择。
 * NF_IP_POST_ROUTING: 本地程序发出去的数据包，或者转发（forward）的数据包已经经过了路由选择，即将交由下层发送出去。
 
->关于这些钩子更具体的位置，请参考[Linux网络数据包的接收过程](https://segmentfault.com/a/1190000008836467)和[数据包的发送过程](https://segmentfault.com/a/1190000008926093)
+>关于这些钩子更具体的位置，请参考[Linux网络数据包的接收过程](014_network_receiving_data.md)和[数据包的发送过程](015_network_sending_data.md)
 
 从上面的流程中，我们还可以看出，不考虑特殊情况的话，一个数据包只会经过下面三个路径中的一个：
 

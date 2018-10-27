@@ -1,6 +1,6 @@
 # Linux Cgroup系列（03）：限制cgroup的进程数（subsystem之pids）
 
-[上一篇文章](https://segmentfault.com/a/1190000007241437)中介绍了如何管理cgroup，从这篇开始将介绍具体的subsystem。
+[上一篇文章](002_cgroup_no_subsystem.md)中介绍了如何管理cgroup，从这篇开始将介绍具体的subsystem。
 
 本篇将介绍一个简单的subsystem，名字叫[pids](https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt)，功能是限制cgroup及其所有子孙cgroup里面能创建的总的task数量。
 
