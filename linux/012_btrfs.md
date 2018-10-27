@@ -1,4 +1,4 @@
-#Btrfs文件系统之subvolume与snapshot
+# Btrfs文件系统之subvolume与snapshot
 
 对于大部分文件系统来说，在磁盘上创建好文件系统，然后再挂载到系统中去就完事了。但对于Btrfs来说，除了在格式化和挂载的时候指定不同的参数外，还支持很多其他的功能，比如管理多块硬盘，支持LVM和RAID等，具体的可以参考它的[官方文档](https://btrfs.wiki.kernel.org/index.php/Main_Page)或者[Linux下常见文件系统对比](https://segmentfault.com/a/1190000008481493)
 
@@ -6,7 +6,7 @@
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##准备环境
+## 准备环境
 
 先创建一个虚拟的硬盘，然后将它格式化成Btrfs，最后将它挂载到目录/mnt/btrfs
 ```bash
@@ -44,7 +44,7 @@ dev@ubuntu:~$ sudo mount /tmp/btrfs.img /mnt/btrfs
 dev@ubuntu:~$ sudo chmod 777 /mnt/btrfs
 ```
 
-##subvolume
+## subvolume
 可以把subvolume理解为一个虚拟的设备，由Btrfs管理，创建好了之后就自动挂载到了Btrfs文件系统的一个目录上，所以我们在文件系统里面看到的subvolume就是一个目录，但它是一个特殊的目录，具有挂载点的一些属性。
 
 新创建的Btrfs文件系统会创建一个路径为“/”的默认subvolume，即root subvolume，其ID为5（别名为0），这是一个ID和目录都预设好的subvolume。
@@ -55,7 +55,7 @@ dev@debian:/mnt/btrfs$ mount|grep btrfs
 /dev/loop1 on /mnt/btrfs type btrfs (rw,relatime,space_cache,subvolid=5,subvol=/)
 ```
 
-###创建subvolume
+### 创建subvolume
 
 这里我们将会利用Btrfs提供的工具创建两个新subvolume和两个文件夹，来看看他们之间的差别
 ```bash
@@ -95,7 +95,7 @@ dev@ubuntu:/mnt/btrfs$ ln ./sub1/sub1-01.txt ./sub2/
 ln: failed to create hard link './sub2/sub1-01.txt' => './sub1/sub1-01.txt': Invalid cross-device link
 ```
 
-##删除subvolume
+## 删除subvolume
 subvolume不能用rm来删除，只能通过btrfs命令来删除
 ```bash
 #普通的目录通过rm就可以被删除
@@ -125,7 +125,7 @@ dev@ubuntu:/mnt/btrfs$ sudo btrfs subvolume del -c sub2
 Delete subvolume (commit): '/mnt/btrfs/sub2'
 ```
 
-##挂载subvolume
+## 挂载subvolume
 subvolume可以直接通过mount命令挂载，和挂载其它设备没什么区别，具体的挂载参数请参考[文档](https://btrfs.wiki.kernel.org/index.php/Mount_options)
 
 ```bash
@@ -144,7 +144,7 @@ dev@debian:/mnt/btrfs$ tree /mnt/sub1/
 └── sub1-01.txt
 ```
 
-##设置subvolume只读
+## 设置subvolume只读
 subvolume可以被设置成只读状态
 ```bash
 #通过btrfs property可以查看和修改subvolume的只读状态
@@ -164,7 +164,7 @@ touch: cannot touch './sub1/sub1-02.txt': Read-only file system
 #将sub1的状态改回去，以免影响后续测试
 dev@ubuntu:/mnt/btrfs$ btrfs property set -ts ./sub1/ ro false
 ```
-##snapshot
+## snapshot
 可以在subvolume的基础上制作快照，几点需要注意：
 
 * 默认情况下subvolume的快照是可写的
@@ -182,7 +182,7 @@ dev@ubuntu:/mnt/btrfs$ btrfs property set -ts ./sub1/ ro false
 
 当然subvolume也可以像git里的master一样被删除。
 
-###创建快照
+### 创建快照
 ```bash
 #在root subvolume的基础上创建一个快照
 #默认情况下快照是可写的，如果要创建只读快照，需要加上-r参数
@@ -231,7 +231,7 @@ dev@debian:/mnt/btrfs$ tree
 
 ```
 
-###删除快照
+### 删除快照
 删除快照和删除subvolume是一样的，没有区别
 ```
 dev@debian:/mnt/btrfs$ sudo btrfs subvolume del snap-root
@@ -246,7 +246,8 @@ dev@debian:/mnt/btrfs$ tree
     ├── sub1-01.txt
     └── sub1-02.txt
 ```
-##default subvolume
+
+## default subvolume
 可以设置Btrfs分区的默认subvolume，即在挂载磁盘的时候，可以只让分区中的指定subvolume对用户可见。看下面的例子：
 
 ```bash
@@ -272,7 +273,7 @@ dev@debian:/mnt/btrfs$ tree /mnt/btrfs1
 dev@debian:/mnt/btrfs$ sudo btrfs subvolume set-default 0 /mnt/btrfs/
 ```
 
-####default subvolume有什么用呢？
+#### default subvolume有什么用呢？
 
 利用snapshot和default subvolume，可以很方便的实现不同系统版本的切换，比如将系统安装在一个subvolume下面，当要做什么危险操作的时候，先在subvolume的基础上做一个快照A，如果操作成功，那么什么都不用做（或者把A删掉），继续用原来的subvolume，A不被删掉也没关系，多一个快照在那里也不占空间，如果操作失败，那么可以将A设置成default subvolume，并将原来的subvolume删除，这样就相当于系统回滚。
 
@@ -282,10 +283,10 @@ dev@debian:/mnt/btrfs$ sudo btrfs subvolume set-default 0 /mnt/btrfs/
 
 随着Btrfs的成熟和普及，相信会改变一些我们使用Linux的习惯。
 
-##结束语
+## 结束语
 Btrfs的功能太多，需要在使用的过程中去熟悉，本文只是粗略的介绍了一下subvolume和snapshot，关于subvolume的增量备份和磁盘限额都没有涉及到，下次有时间再继续这部分内容。
 
-##参考
+## 参考
 * [新一代 Linux 文件系统 btrfs 简介](https://www.ibm.com/developerworks/cn/linux/l-cn-btrfs/)
 * [Btrfs Main Page](https://btrfs.wiki.kernel.org/index.php/Main_Page)
 * [Btrfs: Subvolumes and snapshots](https://lwn.net/Articles/579009/)

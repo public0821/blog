@@ -10,7 +10,7 @@ cpuacct包含当前cgroup所使用的CPU的统计信息，信息量较少，有�
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##创建子cgroup
+## 创建子cgroup
 在ubuntu下，systemd已经帮我们mount好了cpu子系统，我们只需要在相应的目录下创建子目录就可以了
 
 ```bash
@@ -65,7 +65,7 @@ shares用来设置CPU的相对值，并且是针对所有的CPU（内核），�
 * nr_throttled： 在上面的这些周期中，有多少次是受到了限制（即cgroup中的进程在指定的时间周期中用光了它的配额）
 * throttled_time: cgroup中的进程被限制使用CPU持续了多长时间(纳秒)
 
-##示例
+## 示例
 这里以cfs_period_us & cfs_quota_us为例，演示一下如何控制CPU的使用率。
 ```bash
 #继续使用上面创建的子cgroup： test
@@ -101,9 +101,9 @@ nr_throttled 1304
 throttled_time 51542291833
 ```
 
-##结束语
+## 结束语
 使用cgroup限制CPU的使用率比较纠结，用cfs_period_us & cfs_quota_us吧，限制死了，没法充分利用空闲的CPU，用shares吧，又没法配置百分比，极其难控制。总之，使用cgroup的cpu子系统需谨慎。
 
-##参考
+## 参考
 * [CFS Bandwidth Control](https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt)
 * [cpu](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/sec-cpu.html)

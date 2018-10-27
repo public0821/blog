@@ -195,7 +195,7 @@ dev@debian:~$ curl 127.0.0.1:2375/v1.27/containers/2a4717ffb830bf4cff12ef6e6f1e9
 * 客户端再次发送创建容器请求给dockerd，dockerd收到会根据拿到的image创建一个新容器，并初始化容器运行时要用到的相关目录和配置文件，里面就包含了rootfs，容器创建完成后，dockerd返回容器的ID给客户端。
 * 客户端发启动容器请求给dockerd，dockerd收到请求后，会通知docker-containerd启动容器，启动成功后返回成功给客户端。
 
->dockerd去docker hub上取image发生在这里的3~4步之间，而docker-containerd───docker-containerd-shim───hello这些事发生在这里的7~8步之间。
+>dockerd去docker hub上取image发生在这里的3-4步之间，而docker-containerd───docker-containerd-shim───hello这些事发生在这里的7-8步之间。
 
 ## 结束语
 本文大概的介绍了一下hello-world是如何工作的，以及涉及了docker的哪些进程，里面还有大量的细节没有涉及，留给后续文章做进一步介绍。

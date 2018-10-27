@@ -1,4 +1,4 @@
-###ring的作用
+### ring的作用
 
 swift中有3个ring，他们分别是account ring， container ring和object ring, 他们的数据结构和计算方式完全一样，但他们之间是相互独立的， 没有任何关系。 
 
@@ -9,7 +9,7 @@ swift中有3个ring，他们分别是account ring， container ring和object rin
 * object ring
     根据object name可以查找到对应的ring信息存放在哪个device
     
-###ring的结构
+### ring的结构
 
 官方网站和其他很多文章都都从ring的角度介绍swift的ring， 在我个人来看， ring更像一个table，这里会以一个table的角度来介绍ring（个人觉得更直观）。
 
@@ -31,7 +31,7 @@ swift中有3个ring，他们分别是account ring， container ring和object rin
 * 依次将文件上传到各个device所在的节点上去
 * 节点上的object server收到请求后，就会将文件存在相应device的相应partition中，可以理解为放到相应磁盘的相应目录下去。（具体存储的目录结构和格式会在后续介绍到）
 
-###ring的生成
+### ring的生成
 
 ring的生成和调整由命令swift-ring-builder完成， 关于swift-ring-builder的具体用法见相关的文档。
 
@@ -76,7 +76,7 @@ swift-ring-builder account.builder rebalance
     
 * 每个ring的replica数目理论上可以不一样（没有仔细研究），比如account和container的replica数量可以设置的多点，丢失的可能性更低。
 
-###ring生成的算法
+### ring生成的算法
 
-###rebalance的算法    
+### rebalance的算法    
     

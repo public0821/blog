@@ -1,11 +1,11 @@
-#Linux文件系统之aufs
+# Linux文件系统之aufs
 aufs的全称是advanced multi-layered unification filesystem，主要功能是把多个文件夹的内容合并到一起，提供一个统一的视图，主要用于各个Linux发行版的livecd中，以及docker里面用来组织image。
 
 据说由于aufs代码的可维护性不好（代码可读性和注释不太好），所以一直没有被合并到Linux内核的主线中去，不过有些发行版的kernel里面维护的有该文件系统，比如在ubuntu 16.04的内核代码中，就有该文件系统。
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##检查系统是否支持aufs
+## 检查系统是否支持aufs
 在使用aufs之前，可以通过下面的命令确认当前系统是否支持aufs，如果不支持，请自行根据相应发行版的文档安装
 ```bash
 #下面的命令如果没有输出，表示内核不支持aufs
@@ -17,7 +17,7 @@ nodev   aufs
 
 >注意：有些Linux发行版可能将aufs编译成了模块，所以虽然这里显示内核不支持，但其实后面的命令都能正常运行
 
-##挂载aufs
+## 挂载aufs
 选择好相应的参数（参考[帮助文档](http://manpages.ubuntu.com/manpages/xenial/en/man5/aufs.5.html)），调用mount命令即可，示例如下
 ```
 # mount -t aufs -o br=./Branch-0:./Branch-1:./Branch-2 none ./MountPoint
@@ -58,7 +58,7 @@ Branch-2   |             |   002.txt   |   003.txt   |             |
 
 读这些文件的时候访问的是最上层的文件，但如果要写这些文件呢？或者在挂载点下创建新的文件呢？请看下面的示例
 
-##只读挂载
+## 只读挂载
 挂载时，可以指定每个branch的读写权限，如果不指定的话，第一个目录将会是可写的，其它的目录是只读的，在实际使用时，最好是显示的指定每个branch的读写属性，这样大家都一眼就能看懂。这里先演示一下只读挂载：
 
 ```bash
@@ -114,7 +114,7 @@ dev@ubuntu:/tmp/aufs$ rm ./dir1/004.txt
 
 >由于访问一个文件时需要一级一级往下找，所以如果联合的目录（层级）过多的话，会影响性能
 
-##读写挂载
+## 读写挂载
 如果联合的文件夹有写的权限，那么所有的修改都会写入可写的那个文件夹，如果可写的文件夹有多个，那么写入哪个文件夹就依赖于相应的策略，有round-robin、最多剩余空间等，详情请参考[帮助文档](http://manpages.ubuntu.com/manpages/xenial/en/man5/aufs.5.html)中的“create”参数，这里不做介绍。
 
 ```bash
@@ -160,7 +160,7 @@ root->write
 
 从上面可以看出，COW对于大文件来说，性能还是很低的，同时也会占用很多的空间，但由于只需要在第一次修改的时候拷贝一次，所以很多情况下还是能接受。
 
-##删除文件
+## 删除文件
 删除文件时，如果该文件只在rw目录下有，那就直接删除rw目录下的该文件，如果该文件在ro目录下有，那么aufs将会在rw目录里面创建一个.wh开头的文件，标识该文件已被删除
 
 ```bash
@@ -184,12 +184,12 @@ dev@ubuntu:/tmp/aufs$ ls ./dir0/ -a
 .  ..  .wh.002.txt  .wh.003.txt  .wh..wh.aufs  .wh..wh.orph  .wh..wh.plnk
 ```
 
-##结束语
+## 结束语
 这里只介绍了aufs的基本功能，其它的高级配置项没有涉及，比如动态的增加和删除branch等。
 
 使用aufs时，建议参考livecd及docker的使用方式，就是将所有的目录都以只读的方式和一个支持读写的空目录联合起来，这样所有的修改都会存到那个指定的空目录中，不用之后删除掉那个目录就可以了，并且在使用的过程中不要绕过aufs直接操作底层的branch，也不要动态的增加和删除branch，如果把使用场景弄得太复杂，由于aufs里面的细节很多，很有可能会由于对aufs的理解不深而踩坑。
 
-##参考
+## 参考
 * [aufs](http://aufs.sourceforge.net/)
 * [aufs manual](http://manpages.ubuntu.com/manpages/xenial/en/man5/aufs.5.html)
 * [Linux AuFS Examples](http://www.thegeekstuff.com/2013/05/linux-aufs/)

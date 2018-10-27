@@ -8,10 +8,10 @@ cgroup分[v1](https://www.kernel.org/doc/Documentation/cgroup-v1)和[v2](https:/
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##为什么需要cgroup
+## 为什么需要cgroup
 在Linux里，一直以来就有对进程进行分组的概念和需求，比如[session group， progress group](https://www.win.tue.nl/~aeb/linux/lk/lk-10.html)等，后来随着人们对这方面的需求越来越多，比如需要追踪一组进程的内存和IO使用情况等，于是出现了cgroup，用来统一将进程进行分组，并在分组的基础上对进程进行监控和资源控制管理等。
 
-##什么是cgroup
+## 什么是cgroup
 术语cgroup在不同的上下文中代表不同的意思，可以指整个Linux的cgroup技术，也可以指一个具体进程组。
 
 cgroup是Linux下的一种将进程按组进行管理的机制，在用户层看来，cgroup技术就是把系统中的所有进程组织成一颗一颗独立的树，每棵树都包含系统的所有进程，树的每个节点是一个进程组，而每颗树又和一个或者多个subsystem关联，树的作用是将进程分组，而subsystem的作用就是对这些组进行操作。cgroup主要包括下面两部分：
@@ -20,7 +20,7 @@ cgroup是Linux下的一种将进程按组进行管理的机制，在用户层看
 
 * **hierarchy** 一个hierarchy可以理解为一棵cgroup树，树的每个节点就是一个进程组，每棵树都会与零到多个subsystem关联。在一颗树里面，会包含Linux系统中的所有进程，但每个进程只能属于一个节点（进程组）。系统中可以有很多颗cgroup树，每棵树都和不同的subsystem关联，一个进程可以属于多颗树，即一个进程可以属于多个进程组，只是这些进程组和不同的subsystem关联。目前Linux支持12种subsystem，如果不考虑不与任何subsystem关联的情况（systemd就属于这种情况），Linux里面最多可以建12颗cgroup树，每棵树关联一个subsystem，当然也可以只建一棵树，然后让这棵树关联所有的subsystem。当一颗cgroup树不和任何subsystem关联的时候，意味着这棵树只是将进程进行分组，至于要在分组的基础上做些什么，将由应用程序自己决定，systemd就是一个这样的例子。
 
-##如何查看当前系统支持哪些subsystem
+## 如何查看当前系统支持哪些subsystem
 可以通过查看/proc/cgroups(since Linux 2.6.24)知道当前系统支持哪些subsystem，下面是一个例子
 
 ```
@@ -52,7 +52,7 @@ pids            2               68              1
 
 4. 1表示开启，0表示没有被开启(可以通过设置内核的启动参数“cgroup_disable”来控制subsystem的开启).
 
-##如何使用cgroup
+## 如何使用cgroup
 cgroup相关的所有操作都是基于内核中的cgroup virtual filesystem，使用cgroup很简单，挂载这个文件系统就可以了。一般情况下都是挂载到/sys/fs/cgroup目录下，当然挂载到其它任何目录都没关系。
 
 这里假设目录/sys/fs/cgroup已经存在，下面用到的xxx为任意字符串，取一个有意义的名字就可以了，当用mount命令查看的时候，xxx会显示在第一列
@@ -203,7 +203,7 @@ cgroup on /sys/fs/cgroup/cpuset type cgroup (rw,nosuid,nodev,noexec,relatime,cpu
     dev@ubuntu:~/cgroup$ cd .. && rm -r ./cgroup
     ```
 
-##如何查看当前进程属于哪些cgroup
+## 如何查看当前进程属于哪些cgroup
 可以通过查看/proc/[pid]/cgroup(since Linux 2.6.24)知道指定进程属于哪些cgroup。
 ```bash
 dev@ubuntu:~$ cat /proc/777/cgroup
@@ -227,7 +227,7 @@ dev@ubuntu:~$ cat /proc/777/cgroup
 
 3. 进程在cgroup树中的路径，即进程所属的cgroup，这个路径是相对于挂载点的相对路径。
 
-##所有的subsystems
+## 所有的subsystems
 目前Linux支持下面12种subsystem
 
 * [cpu](https://www.kernel.org/doc/Documentation/scheduler/sched-bwc.txt) (since Linux 2.6.24; CONFIG_CGROUP_SCHED)
@@ -270,11 +270,11 @@ suspend和restore一个cgroup中的所有进程。
 
 不同subsystem的工作方式可能差别较大，对系统性能的影响也不一样，本人不是这方面的专家，后续文章中只会从功能的角度来介绍不同的subsystem，不会涉及到他们内部的实现。
 
-##结束语
+## 结束语
 本文介绍了cgroup的一些概念，包括subsystem和hierarchy，然后介绍了怎么挂载cgroup文件系统以及12个subsystem的功能。从下一篇开始，将介绍cgroup具体的用法和不同的subsystem。
 
 
-##参考
+## 参考
 * [cgroups man page](http://man7.org/linux/man-pages/man7/cgroups.7.html)
 * [CGROUPS v1](https://www.kernel.org/doc/Documentation/cgroup-v1/cgroups.txt)
 * [CGROUPS v2](https://www.kernel.org/doc/Documentation/cgroup-v2.txt)

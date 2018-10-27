@@ -4,20 +4,20 @@
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##为什么需要内存控制？
+## 为什么需要内存控制？
 代码总会有bug，有时会有内存泄漏，或者有意想不到的内存分配情况，或者这是个恶意程序，运行起来就是为了榨干系统内存，让其它进程无法分配到足够的内存而出现异常，如果系统配置了交换分区，会导致系统大量使用交换分区，从而系统运行很慢。
 
 * 站在一个普通Linux开发者的角度，如果能控制一个或者一组进程所能使用的内存数，那么就算代码有bug，内存泄漏也不会对系统造成影响，因为可以设置内存使用量的上限，当到达这个值之后可以将进程重启。
 * 站在一个系统管理者的角度，如果能限制每组进程所能使用的内存量，那么不管程序的质量如何，都能将它们对系统的影响降到最低，从而保证整个系统的稳定性。
 
-##内存控制能控制些什么？
+## 内存控制能控制些什么？
 * 限制cgroup中所有进程所能使用的物理内存总量
 
 * 限制cgroup中所有进程所能使用的物理内存+交换空间总量(CONFIG_MEMCG_SWAP)： 一般在server上，不太会用到swap空间，所以不在这里介绍这部分内容。
 
 * 限制cgroup中所有进程所能使用的内核内存总量及其它一些内核资源(CONFIG_MEMCG_KMEM)： 限制内核内存有什么用呢？其实限制内核内存就是限制当前cgroup所能使用的内核资源，比如进程的内核栈空间，socket所占用的内存空间等，通过限制内核内存，当内存吃紧时，可以阻止当前cgroup继续创建进程以及向内核申请分配更多的内核资源。由于这块功能被使用的较少，本篇中也不对它做介绍。
 
-##内核相关的配置
+## 内核相关的配置
 * 由于memory subsystem比较耗资源，所以内核专门添加了一个参数cgroup_disable=memory来禁用整个memory subsystem，这个参数可以通过GRUB在启动系统的时候传给内核，加了这个参数后内核将不再进行memory subsystem相关的计算工作，在系统中也不能挂载memory subsystem。
 
 * 上面提到的CONFIG_MEMCG_SWAP和CONFIG_MEMCG_KMEM都是扩展功能，在使用前请确认当前内核是否支持，下面看看ubuntu 16.04的内核：
@@ -32,7 +32,7 @@
 
 * CONFIG_MEMCG_SWAP控制内核是否支持Swap Extension，而[CONFIG_MEMCG_SWAP_ENABLED](http://cateee.net/lkddb/web-lkddb/MEMCG_SWAP_ENABLED.html)（3.6以后的内核新加的参数）控制默认情况下是否使用Swap Extension，由于Swap Extension比较耗资源，所以很多发行版（比如ubuntu）默认情况下会禁用该功能（这也是上面那行被注释掉的原因），当然用户也可以根据实际情况，通过设置内核参数swapaccount=0或者1来手动禁用和启用Swap Extension。
 
-##怎么控制？
+## 怎么控制？
 在ubuntu 16.04里面，systemd已经帮我们将memory绑定到了/sys/fs/cgroup/memory
 ```bash
 #如果这里发现有多行结果，说明这颗cgroup数被绑定到了多个地方，
@@ -40,7 +40,7 @@
 dev@dev:~$ mount|grep memory
 cgroup on /sys/fs/cgroup/memory type cgroup (rw,nosuid,nodev,noexec,relatime,memory)
 ```
-###创建子cgroup
+### 创建子cgroup
 在/sys/fs/cgroup/memory下创建一个子目录即创建了一个子cgroup
 ```bash
 #--------------------------第一个shell窗口----------------------
@@ -74,7 +74,7 @@ memory.force_empty     memory.kmem.tcp.failcnt         memory.limit_in_bytes    
 ```
 参考：[eventfd](http://man7.org/linux/man-pages/man2/eventfd.2.html)，[numa](https://en.wikipedia.org/wiki/Non-uniform_memory_access)
 
-###添加进程
+### 添加进程
 和[“创建并管理cgroup”](https://segmentfault.com/a/1190000007241437)中介绍的一样，往cgroup中添加进程只要将进程号写入cgroup.procs就可以了
 
 >注意：本篇将以进程为单位进行操作，不考虑以线程为单位进行管理（原因见[“创建并管理cgroup”](https://segmentfault.com/a/1190000007241437)中cgroup.pro与tasks的区别），也即只写cgroup.procs文件，不会写tasks文件
@@ -91,7 +91,7 @@ dev@dev:/sys/fs/cgroup/memory/test$ top
 #后续操作不再在这个窗口进行，避免在这个bash中运行进程影响cgropu里面的进程数及相关统计
 ```
 
-###设置限额
+### 设置限额
 设置限额很简单，写文件memory.limit_in_bytes就可以了，请仔细看示例
 ```bash
 #--------------------------第一个shell窗口----------------------
@@ -170,7 +170,7 @@ dev@dev:/sys/fs/cgroup/memory/test$ cat memory.usage_in_bytes
 
 从上面的这些测试可以看出，一旦设置了内存限制，将立即生效，并且当物理内存使用量达到limit的时候，memory.failcnt的内容会加1，但这时进程不一定就会被kill掉，内核会尽量将物理内存中的数据移到swap空间上去，如果实在是没办法移动了（设置的limit过小，或者swap空间不足），默认情况下，就会kill掉cgroup里面继续申请内存的进程。
 
-###触发控制
+### 触发控制
 当物理内存达到上限后，系统的默认行为是kill掉cgroup中继续申请内存的进程，那么怎么控制这样的行为呢？答案是配置memory.oom_control
 
 这个文件里面包含了一个控制是否为当前cgroup启动OOM-killer的标识。如果写0到这个文件，将启动OOM-killer，当内核无法给进程分配足够的内存时，将会直接kill掉该进程；如果写1到这个文件，表示不启动OOM-killer，当内核无法给进程分配足够的内存时，将会暂停该进程直到有空余的内存之后再继续运行；同时，memory.oom_control还包含一个只读的under_oom字段，用来表示当前是否已经进入oom状态，也即是否有进程被暂停了。
@@ -341,8 +341,8 @@ mem_cgroup oom event received
 mem_cgroup oom event received
 ```
 
-##其他
-###进程迁移（migration）
+## 其他
+### 进程迁移（migration）
 当一个进程从一个cgroup移动到另一个cgroup时，默认情况下，该进程已经占用的内存还是统计在原来的cgroup里面，不会占用新cgroup的配额，但新分配的内存会统计到新的cgroup中（包括swap out到交换空间后再swap in到物理内存中的部分）。
 
 我们可以通过设置memory.move_charge_at_immigrate让进程所占用的内存随着进程的迁移一起迁移到新的cgroup中。
@@ -358,18 +358,18 @@ disable：echo 0 > memory.move_charge_at_immigrate
 
 >注意：迁移内存占用数据是比较耗时的操作。
 
-###移除cgroup
+### 移除cgroup
 当memory.move_charge_at_immigrate为0时，就算当前cgroup中里面的进程都已经移动到其它cgropu中去了，由于进程已经占用的内存没有被统计过去，当前cgroup有可能还占用很多内存，当移除该cgroup时，占用的内存需要统计到谁头上呢？答案是依赖memory.use_hierarchy的值，如果该值为0，将会统计到root cgroup里；如果值为1，将统计到它的父cgroup里面。
 
-###force_empty
+### force_empty
 当向memory.force_empty文件写入0时（echo 0 > memory.force_empty），将会立即触发系统尽可能的回收该cgroup占用的内存。该功能主要使用场景是移除cgroup前（cgroup中没有进程），先执行该命令，可以尽可能的回收该cgropu占用的内存，这样迁移内存的占用数据到父cgroup或者root cgroup时会快些。
 
-###memory.swappiness
+### memory.swappiness
 该文件的值默认和全局的swappiness（/proc/sys/vm/swappiness）一样，修改该文件只对当前cgroup生效，其功能和全局的swappiness一样，请参考[Linux交换空间](https://segmentfault.com/a/1190000008125116)中关于swappiness的介绍。
 
 >注意：有一点和全局的swappiness不同，那就是如果这个文件被设置成0，就算系统配置的有交换空间，当前cgroup也不会使用交换空间。
 
-###memory.use_hierarchy
+### memory.use_hierarchy
 该文件内容为0时，表示不使用继承，即父子cgroup之间没有关系；当该文件内容为1时，子cgroup所占用的内存会统计到所有祖先cgroup中。
 
 如果该文件内容为1，当一个cgroup内存吃紧时，会触发系统回收它以及它所有子孙cgroup的内存。
@@ -405,16 +405,16 @@ sh: echo: I/O error
 
 >注意： 当系统内存吃紧且cgroup达到soft limit时，系统为了把当前cgroup的内存使用量控制在soft limit下，在收到当前cgroup新的内存分配请求时，就会触发回收内存操作，所以一旦到达这个状态，就会频繁的触发对当前cgroup的内存回收操作，会严重影响当前cgroup的性能。
 
-###memory.pressure_level
+### memory.pressure_level
 这个文件主要用来监控当前cgroup的内存压力，当内存压力大时（即已使用内存快达到设置的限额），在分配内存之前需要先回收部分内存，从而影响内存分配速度，影响性能，而通过监控当前cgroup的内存压力，可以在有压力的时候采取一定的行动来改善当前cgroup的性能，比如关闭当前cgroup中不重要的服务等。目前有三种压力水平：
 
-####low
+#### low
 意味着系统在开始为当前cgroup分配内存之前，需要先回收内存中的数据了，这时候回收的是在磁盘上有对应文件的内存数据。
 
-####medium
+#### medium
 意味着系统已经开始频繁为当前cgroup使用交换空间了。
 
-####critical
+#### critical
 快撑不住了，系统随时有可能kill掉cgroup中的进程。
 
 如何配置相关的监听事件呢？和memory.oom_control类似，大概步骤如下：
@@ -426,7 +426,7 @@ sh: echo: I/O error
 
 >注意： 多个level可能要创建多个event_fd，好像没有办法共用一个（本人没有测试过）
 
-###Memory thresholds
+### Memory thresholds
 我们可以通过cgroup的事件通知机制来实现对内存的监控，当内存使用量穿过（变得高于或者低于）我们设置的值时，就会收到通知。使用方法和memory.oom_control类似，大概步骤如下：
 
 1. 利用函数eventfd(2)创建一个event_fd
@@ -441,9 +441,9 @@ sh: echo: I/O error
 * 里面的'rss + file_mapped"才约等于是我们常说的RSS（ps aux命令看到的RSS）
 * 文件（动态库和可执行文件）及共享内存可以在多个进程之间共享，不过它们只会统计到他们的owner cgroup中的file_mapped去。（不确定是怎么定义owner的，但如果看到当前cgroup的file_mapped值很小，说明共享的数据没有算到它头上，而是其它的cgroup）
 
-##结束语
+## 结束语
 本篇没有介绍swap和kernel相关的内容，不过在实际使用过程中一定要留意swap空间，如果系统使用了交换空间，那么设置限额时一定要注意一点，那就是当cgroup的物理空间不够时，内核会将不常用的内存swap out到交换空间上，从而导致一直不触发oom killer，而是不停的swap out／in，导致cgroup中的进程运行速度很慢。如果一定要用交换空间，最好的办法是限制swap+物理内存的额度，虽然我们在这篇中没有介绍这部分内容，但其使用方法和限制物理内存是一样的，只是换做写文件memory.memsw.limit_in_bytes罢了。
 
-##参考
+## 参考
 * [Memory Resource Controller](https://www.kernel.org/doc/Documentation/cgroup-v1/memory.txt)
 * [memory subsystem](https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/6/html/Resource_Management_Guide/sec-memory.html)

@@ -1,10 +1,10 @@
-#Linux的启动过程
+# Linux的启动过程
 
 本文将简单介绍一下Linux的启动过程，希望对那些安装Linux的过程中遇到了问题的朋友有些帮助
 
 >**声明：** 本人没用过UEFI模式和GPT分区格式，所有关于这两部分的内容都是网络上找的资料，仅供参考。
 
-##典型启动顺序
+## 典型启动顺序
 1. 计算机通电后，CPU开始从一个固定的地址加载代码并开始执行，这个地址就是BIOS的驱动程序所在的位置，于是BIOS的驱动开始执行。
 
 2. BIOS驱动首先进行一些自检工作，然后根据配置的启动顺序，依次尝试加载启动程序。比如配置的启动顺序是CD->网卡01->USB->硬盘。 BIOS 将先检查是否能从CD启动，如果不行，接着试着从网卡启动，再试USB盘，最后再试硬盘。
@@ -24,7 +24,7 @@
     
 >从上面的过程可以看出，一个PXE服务器至少包含一个DHCP server和一个TFTP server。
 
-##以硬盘启动及GRUB2为例，接着介绍Linux的启动过程
+## 以硬盘启动及GRUB2为例，接着介绍Linux的启动过程
 1. BIOS加载硬盘[MBR](https://en.wikipedia.org/wiki/Master_boot_record)中的[GRUB](https://zh.wikipedia.org/wiki/GNU_GRUB)后，启动过程就被GRUB2接管
 
 2. 由于MBR里面空间很小，GRUB2只能放部分代码到里面，所以它采用了好几级的结构来加载自己，详情请点[这里](https://en.wikipedia.org/wiki/GNU_GRUB#Booting)，总之，最后GRUB2会加载/boot/grub/下的驱动到内存中。   
@@ -36,9 +36,9 @@
 5. init进程开始调用一系列的脚本来创建很多子进程，这些子进程负责初始化整个系统
 
 
-##注意事项：
+## 注意事项：
 
-###GRUB2
+### GRUB2
 GRUB2需要加载/boot下的grub模块才能工作，所以格式化Linux分区一定要注意，如果不小心格式化了/boot所在的分区，会导致GRUB2用不了，从而启动不了任何系统。
 GRUB2同时需要加载硬盘上的Linux内核文件，所以它也需要有文件系统的驱动，当然它只需要读取文件，所以驱动很小。GRUB2已经支持所有的常见文件系统，并且完全支持LVM和RAID。
 
@@ -47,7 +47,7 @@ GRUB2同时需要加载硬盘上的Linux内核文件，所以它也需要有文�
 * [GRUB2: Differences from previous versions](http://www.gnu.org/software/grub/manual/grub.html#Changes-from-GRUB-Legacy)
 * [GRUB2: features](http://www.gnu.org/software/grub/manual/grub.html#Features)
 
-###[BIOS](https://en.wikipedia.org/wiki/BIOS) VS [UEFI](https://en.wikipedia.org/wiki/Unified_Extensible_Firmware_Interface)
+### [BIOS](https://en.wikipedia.org/wiki/BIOS) VS [UEFI](https://en.wikipedia.org/wiki/Unified_Extensible_Firmware_Interface)
 UEFI可以简单理解为新一代的BIOS，支持更多新的功能，当然它也向下兼容BIOS，现在新的主板都支持UEFI，只是我们BIOS叫习惯了，所以就算主板已经支持新的UEFI，我们还是把它当BIOS用。UEFI的优点请参考[这里](https://en.wikipedia.org/wiki/Unified_Extensible_Firmware_Interface#Advantages)。
 
 BIOS和UEFI两者启动系统的方式不一样，BIOS是读取硬盘第一个扇区的MBR到内存中，然后将控制权交给MBR里的Bootloader。而UEFI是读取efi分区，如果efi分区存在且里面有启动程序的话，将控制权交给启动程序，否则和BIOS一样，读取硬盘第一个扇区的MBR到内存中，将控制权交给MBR里面的Bootloader。从这里可以看出：
@@ -73,7 +73,7 @@ BIOS和UEFI两者启动系统的方式不一样，BIOS是读取硬盘第一个�
 * [What is the difference in “Boot with BIOS” and “Boot with UEFI”](http://superuser.com/questions/496026/what-is-the-difference-in-boot-with-bios-and-boot-with-uefi)
 * [Learn How UEFI Will Replace Your PC’s BIOS](http://www.howtogeek.com/56958/)
 
-###MBR VS [GPT](https://en.wikipedia.org/wiki/GUID_Partition_Table)
+### MBR VS [GPT](https://en.wikipedia.org/wiki/GUID_Partition_Table)
 MBR格式硬盘的布局
 ```
     ------------------------------------------------------------------
@@ -101,7 +101,7 @@ GPT的主要优点：
 
 * [What’s the Difference Between GPT and MBR When Partitioning a Drive?](http://www.howtogeek.com/193669/whats-the-difference-between-gpt-and-mbr-when-partitioning-a-drive/)
 
-###内核参数和initrd image
+### 内核参数和initrd image
 
 下面是一个GRUB2配置的例子
 ```
@@ -121,13 +121,13 @@ GPT的主要优点：
 
 ```
 
-####initrd image是干嘛的呢？
+#### initrd image是干嘛的呢？
 
 我们都知道Linux内核模块的概念，比方说Linux支持N种不同的文件系统，Ext2/3/4，XFS, Btrfs等等，那需要把所有的这些文件系统驱动都编译进内核吗？当然不需要，因为这样做会导致内核太大，运行时占用太多的内存，取而代之，我们会把这些驱动编译成一个一个的内核模块，在需要用到的时候再把它们加载进内核，其它时间存放在磁盘上就好了。
 
 现在有个问题，在GRUB将控制权交给Linux内核后，内核需要启动init程序，这个init程序是放在某个磁盘分区上的，这个磁盘分区用的是N个文件系统中的某一个，内核到哪里找这个文件系统的驱动呢？这个时候initrd image出场了，它里面包含了很多驱动模块，并且用的是内存文件系统，内存文件系统的驱动已经编译到内核中了，所以内核是可以直接访问initrd image的(老版本的initrd可能用的其它格式，但不管怎么样，肯定是被内核支持的格式)。当然initrd image里面不仅仅只包含文件系统的驱动，还有其它的很多文件，这个跟每个发行版有关，具体的内容可以参考相应的发行版。
 
-####init
+#### init
 内核启动的第一个用户态进程init到底是个什么东东？其实它就是一个普通的程序，内核并没有对它做什么要求，只是别退出就好，init进程如果挂了的话，系统就崩溃了，至于init进程干些啥，启动其它的哪些进程，跟内核已经没有关系了，内核的任务就是管理硬件资源并调度这些用户态进程。我们也可以写一个我们自己的init程序放到那里，它也会正常的被内核启动起来。
 
 除了在init进程里指定了handler的信号外，内核会帮init进程屏蔽掉其他所有信号，包括普通进程无法捕获和屏蔽的信号SIGKILL和SIGSTOP，这样可以防止其他进程不小心kill掉init进程导致系统挂掉。这是内核给用户态启动的第一个进程的特殊待遇。

@@ -1,4 +1,4 @@
-#Linux Namespace系列（09）：利用Namespace创建一个简单可用的容器
+# Linux Namespace系列（09）：利用Namespace创建一个简单可用的容器
 
 本文将演示如何利用namespace创建一个完整的容器，并在里面运行busybox。如果对namespace不是很熟悉，请先参考前面几遍介绍不同类型namespace的文章。
 
@@ -6,7 +6,7 @@ busybox是一个Linux下的可执行程序，采用静态链接，不依赖于�
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##准备container的根目录
+## 准备container的根目录
 ```bash
 #创建一个单独的目录，后续所有的操作都在该目录下进行，目录名称无特殊要求
 dev@ubuntu:~$ mkdir chroot && cd chroot
@@ -51,7 +51,7 @@ uid=0 gid=0 groups=0
 dev@ubuntu:~/chroot$ 
 ```
 
-##创建容器并做相关配置
+## 创建容器并做相关配置
 ```bash
 #新建/data目录用来在主机和容器之间共享数据
 dev@ubuntu:~/chroot$ sudo mkdir /data
@@ -154,9 +154,9 @@ dev@ubuntu:~/chroot$ ls /data
 001  002
 ```
 
-##结束语
+## 结束语
 
 本文利用busybox和pivot_root演示了如何创建一个简单的容器，并且实现了在host和container之间共享文件夹。这个容器的功能非常简单，很多目录都没有构建，导致只能运行busybox里面的部分命令，有些命令运行时会有异常。要想构造一个完整易用的容器，还需要很多工作要做，这里只演示了冰山一角，在后续的“docker系列”中，将深入分析docker是如何一步一步帮助我们构建安全易用的contianer的，敬请期待。
 
-##参考
+## 参考
 * [Video : Cgroups, namespaces, and beyond: what are containers made from?](https://www.youtube.com/watch?v=sK5i-N34im8)

@@ -1,3 +1,4 @@
 *.html
 tmp.md
 tmp.txt
+.DS_Store

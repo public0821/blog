@@ -1,4 +1,4 @@
-#Linux虚拟网络设备之bridge(桥)
+# Linux虚拟网络设备之bridge(桥)
 
 继前两篇介绍了[tun/tap](https://segmentfault.com/a/1190000009249039)和[veth](https://segmentfault.com/a/1190000009251098)之后，本篇将介绍Linux下常用的一种虚拟网络设备，那就是bridge(桥)。
 

@@ -10,13 +10,13 @@ IPC namespace用来隔离[System V IPC objects](http://man7.org/linux/man-pages/
 
 >下面的所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##namespace相关tool
+## namespace相关tool
 从这篇文章开始，不再像介绍UTS namespace那样自己写代码，而是用ubuntu 16.04中现成的两个工具，他们的实现和上一篇文章中介绍UTS namespace时的代码类似，只是多了一些参数处理
 
 * nsenter：加入指定进程的指定类型的namespace，然后执行参数中指定的命令。详情请参考[帮助文档](http://man7.org/linux/man-pages/man1/nsenter.1.html)和[代码](https://github.com/karelzak/util-linux/blob/master/sys-utils/nsenter.c)。
 * unshare：离开当前指定类型的namespace，创建且加入新的namespace，然后执行参数中指定的命令。详情请参考[帮助文档](http://man7.org/linux/man-pages/man1/unshare.1.html)和[代码](https://github.com/karelzak/util-linux/blob/master/sys-utils/unshare.c)。
 
-##示例
+## 示例
 这里将以消息队列为例，演示一下隔离效果，在本例中将用到两个ipc相关的命令
 
 * ipcmk - 创建shared memory segments, message queues, 和semaphore arrays
@@ -129,5 +129,5 @@ key        msqid      owner      perms      used-bytes   messages
 
 ```
 
-##结束语
+## 结束语
 上面介绍了IPC namespace和两个常用的跟namespace相关的工具，从演示过程可以看出，IPC namespace差不多和UTS namespace一样简单，没有太复杂的逻辑，也没有父子namespace关系。不过后续将要介绍的其他namespace就要比这个复杂多了。

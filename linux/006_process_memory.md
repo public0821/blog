@@ -1,11 +1,11 @@
-#Linux进程的内存使用情况
+# Linux进程的内存使用情况
 
 在linux下，使用top，ps等命令查看进程的内存使用情况时，经常看到VIRT，RES，SHR等，他们都代表什么意思呢？不同的大小对进程有什么影响呢？这篇文章将来聊一聊这个问题。阅读本篇前建议先阅读[Linux内存管理](https://segmentfault.com/a/1190000008125006)，了解一些Linux下内存的基本概念，如什么是anonymous和file backed映射等。
 
-##查看进程所使用的内存
+## 查看进程所使用的内存
 在进程的眼里，所有的内存都是虚拟内存，但是这些虚拟内存所对应的物理内存是多少呢？正如我们在[Linux内存管理](https://segmentfault.com/a/1190000008125006)中所介绍的那样，并不是每块虚拟内存都有对应的物理内存，可能对应的数据在磁盘上的一个文件中，或者交换空间上的一块区域里。一个进程真正的物理内存使用情况只有内核知道，我们只能通过内核开放的一些接口来获取这些统计数据。
 
-##top
+## top
 先看看top的输出（top用到的数据来自于/proc/[pid]/statm），这里只是摘录了几条数据：
 ```
   PID USER      PR  NI    VIRT    RES    SHR S %CPU %MEM     TIME+ COMMAND
@@ -28,7 +28,7 @@ SHR：RES的一部分，表示和别的进程共享的内存，包括通过mmap�
 
 >注意：top命令输出中的RES和pmap输出中的RSS是一个东西。
 
-##pmap
+## pmap
 上面top命令只是给出了一个进程大概占用了多少的内存，而pmap能更详细的给出内存都是被谁占用了。pmap命令输出的内容来自于/proc/[pid]/maps和/proc/[pid]/smaps这两个文件，第一个文件包含了每段的一个大概描述，而后一个文件包含了更详细的信息。
 
 这里用pmap看看当前bash的内存使用情况，：
@@ -112,7 +112,7 @@ ffffffffff600000 r-xp 00000000  00:00      0     4    0    0          0         
 
 * RSS列表示实际占用的物理内存大小
 
-##top命令输出的SHR内存
+## top命令输出的SHR内存
 最后来看看top命令输出的SHR到底由pmap的哪些输出构成
 ```bash
 dev@dev:~$ pmap -d $$
@@ -141,7 +141,7 @@ dev@dev:~$ top -p $$
 ```
 从上面的输出可看出SHR ≈ RES - writeable/private，其中writeable/private主要包含stack和heap以及可执行文件和动态库的data和bss段，而stack+heap=1544+132=1675，这已经占了绝大部分，从而data和bss段之类的基本上可以忽略了，所以一般情况下，SHR ≈ RES - [heap] - [stack]，由于stack一般都比较小，上面的等式可以进一步约等于：SHR ≈ RES - [heap]。
 
-##总结
+## 总结
 top命令能看到一个进程占用的虚拟内存空间、物理内存空间以及和别的进程共享的物理内存空间，这里共享的空间包括通过mmap共享的内存以及共享的可执行文件以及动态库。而mmap命令能看到更详细的信息，比如可执行文件和它所链接的动态库大小，以及物理内存都是被哪些段给占用了。
 
 进程占用的虚拟地址空间大小跟程序的规模有关，除了stack和heap段，其他段的大小基本上都是固定的，并且在程序链接的时候就已经确定了，所以基本上只要关注stack和heap段就可以了，由于stack相对heap来说很小，所以只要没什么stack异常，只需要关注heap。
@@ -150,6 +150,6 @@ top命令能看到一个进程占用的虚拟内存空间、物理内存空间�
 
 要想精确评估一个进程到底占了多少内存，还是很难的，需要对进程的每个段有深入的理解，尤其是SHR部分都有哪些进程在一起共享，不过现在服务器上的内存都是以G为单位的，所以一般情况下大概的估算一下加上合理的测试就能满足我们的需求了。
 
-##参考
+## 参考
 * [Understanding Process memory](https://techtalk.intersec.com/2013/07/memory-part-2-understanding-process-memory/)
 * [Understanding memory usage on Linux](http://virtualthreads.blogspot.jp/2006/02/understanding-memory-usage-on-linux.html)

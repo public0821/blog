@@ -12,7 +12,7 @@ UTS namespace用来隔离系统的hostname以及NIS domain name。
 
 >下面的所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##创建新的UTS namespace
+## 创建新的UTS namespace
 多说无益，直接上代码，我尽量将注释写的足够详细，请仔细看代码和输出结果
 
 >**注意:**
@@ -260,7 +260,7 @@ root@container001:~/code# readlink /proc/$$/ns/uts
 uts:[4026532445]
 ```
 
-##退出当前namespace并加入新创建的namespace
+## 退出当前namespace并加入新创建的namespace
 继续看代码
 ```c
 #define _GNU_SOURCE
@@ -350,7 +350,7 @@ root@ubuntu:~/code# readlink /proc/$$/ns/uts
 uts:[4026532458]
 ```
 
-##内核中的实现
+## 内核中的实现
 上面演示了这三个函数的功能，那么UTS namespace在内核中又是怎么实现的呢？
 
 在老版本中，UTS相关的信息保存在一个全局变量中，所有进程都共享这个全局变量，gethostname()的实现大概如下
@@ -407,7 +407,7 @@ SYSCALL_DEFINE2(gethostname, char __user *, name, int, len)
 
 其他类型的namespace基本上也是差不多的原理。
 
-##总结
+## 总结
 * namespace的本质就是把原来所有进程全局共享的资源拆分成了很多个一组一组进程共享的资源
 * 当一个namespace里面的所有进程都退出时，namespace也会被销毁，所以抛开进程谈namespace没有意义
 * UTS namespace就是进程的一个属性，属性值相同的一组进程就属于同一个namespace，跟这组进程之间有没有亲戚关系无关
@@ -417,7 +417,7 @@ SYSCALL_DEFINE2(gethostname, char __user *, name, int, len)
 * UTS namespace没有嵌套关系，即不存在说一个namespace是另一个namespace的父namespace
 
 
-##参考
+## 参考
 
 * [Namespaces in operation, part 2: the namespaces API](https://lwn.net/Articles/531114/)
 * [Resource management:Linux kernel Namespaces and cgroups](http://www.haifux.org/lectures/299/netLec7.pdf)

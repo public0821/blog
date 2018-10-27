@@ -16,7 +16,7 @@ Linux下的每个进程都有一个对应的/proc/PID目录，该目录包含了
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##简单示例
+## 简单示例
 
 ```bash
 #查看当前pid namespace的ID
@@ -81,7 +81,7 @@ root         1     0  0 7月14 pts/0   00:00:00 bash
 root        44     1  0 00:06 pts/0    00:00:00 ps -ef
 ```
 
-##PID namespace嵌套
+## PID namespace嵌套
 
 * 调用unshare或者setns函数后，当前进程的namespace不会发生变化，不会加入到新的namespace，而它的子进程会加入到新的namespace。也就是说进程属于哪个namespace是在进程创建的时候决定的，并且以后再也无法更改。
 
@@ -89,7 +89,7 @@ root        44     1  0 00:06 pts/0    00:00:00 ps -ef
  
 * 可以在祖先namespace中看到子namespace的所有进程信息，且可以发信号给子namespace的进程，但进程在不同namespace中的PID是不一样的。
 
-###嵌套示例
+### 嵌套示例
 ```bash
 #--------------------------第一个shell窗口----------------------
 #记下最外层的namespace ID
@@ -203,7 +203,7 @@ root@container002:/# exit
 dev@ubuntu:~$
 ```
 
-##“init”示例
+## “init”示例
 当一个进程的父进程被kill掉后，该进程将会被当前namespace中pid为1的进程接管，而不是被最外层的系统级别的init进程接管。
 
 当pid为1的进程停止运行后，内核将会给这个namespace及其子孙namespace里的所有其他进程发送SIGKILL信号，致使其他所有进程都停止，于是当前namespace及其子孙后代的namespace都被销毁掉。
@@ -296,13 +296,13 @@ dev@ubuntu:~$
 
 [man-pages](http://man7.org/linux/man-pages/man7/pid_namespaces.7.html)里面说SIGSTOP也可以kill掉子namespace里的“init”进程，但我在上面试了下，没效果，具体原因未知。
 
-##其他
+## 其他
 
 * 通常情况下，如果PID namespace中的进程都退出了，这个namespace将会被销毁，但就如在前面[“Namespace概述”](https://segmentfault.com/a/1190000006908272)里介绍的，有两种情况会导致就算进程都退出了，这个namespace还会存在。但对于PID namespace来说，就算namespace还在，由于里面没有“init”进程，Kernel不允许其它进程加入到这个namespace，所以这个存在的namespace没有意义
 
 * 当一个PID通过UNIX domain socket在不同的PID namespace中传输时（请参考[unix(7)](http://man7.org/linux/man-pages/man7/unix.7.html)里面的SCM_CREDENTIALS），PID将会自动转换成目的namespace中的PID.
 
-##参考
+## 参考
 
 * [Namespaces in operation, part 3: PID namespaces](https://lwn.net/Articles/531419/)
 * [Namespaces in operation, part 4: more on PID namespaces](https://lwn.net/Articles/532748/)

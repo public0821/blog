@@ -10,7 +10,7 @@ Mount namespaces是第一个被加入Linux的namespace，由于当时没想到�
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##演示
+## 演示
 
 ```bash
 #--------------------------第一个shell窗口----------------------
@@ -80,12 +80,12 @@ subdir01
 #说明两个namespace中的mount信息是隔离的
 ```
 
-##Shared subtrees
+## Shared subtrees
 在某些情况下，比如系统添加了一个新的硬盘，这个时候如果mount namespace是完全隔离的，想要在各个namespace里面用这个硬盘，就需要在每个namespace里面手动mount这个硬盘，这个是很麻烦的，这时[Shared subtrees](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt)就可以帮助我们解决这个问题。
 
 关于Shared subtrees的详细介绍请参考[Linux mount (第二部分)](https://segmentfault.com/a/1190000006899213)，里面有他的详细介绍以及bind nount的例子。
 
-###演示
+### 演示
 对Shared subtrees而言，mount namespace和bind mount的情况差不多，这里就简单演示一下shared和private两种类型
 ```bash
 #--------------------------第一个shell窗口----------------------
@@ -181,7 +181,7 @@ root@container001:~/disks# cat /proc/self/mountinfo |grep disk3| sed 's/ - .*//'
 
 关于mount命令和mount namespace的配合，里面有很多技巧，后面如果需要用到更复杂的用法，会再做详细的介绍。
 
-##参考
+## 参考
 * [kernel:Shared Subtrees](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt)
 * [lwn:Shared subtrees](https://lwn.net/Articles/159077/)
 * [lwn:Mount namespaces, mount propagation, and unbindable mounts](https://lwn.net/Articles/690679/)

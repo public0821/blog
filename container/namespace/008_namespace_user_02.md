@@ -6,7 +6,7 @@
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##和其他类型的namespace一起使用
+## 和其他类型的namespace一起使用
 除了user namespace外，创建其它类型的namespace都需要CAP_SYS_ADMIN的capability。当新的user namespace创建并映射好uid、gid了之后， 这个user namespace的第一个进程将拥有完整的所有capabilities，意味着它就可以创建新的其它类型namespace
 
 ```bash
@@ -55,7 +55,7 @@ unshare(CLONE_NEWUSER | CLONE_NEWIPC);
 
 在上面这种情况下，内核会保证CLONE_NEWUSER先被执行，然后执行剩下的其他CLONE_NEW*，这样就使得不用root账号而创建新的容器成为可能，这条规则对于clone函数也同样适用。
 
-##和其他类型namespace的关系
+## 和其他类型namespace的关系
 Linux下的每个namespace，都有一个user namespace和他关联，这个user namespace就是创建相应namespace时进程所属的user namespace，相当于每个namespace都有一个owner（user namespace），这样保证对任何namespace的操作都受到user namespace权限的控制。这也是上一篇中为什么sethostname失败的原因，因为要修改的uts namespace属于的父user namespace，而新user namespace的进程没有老user namespace的任何capabilities。
 
 这里可以看看uts namespace的结构体，里面有一个指向user namespace的指针，指向他所属于的user namespace，其他类型的namespace也类似。
@@ -68,11 +68,11 @@ struct uts_namespace {
 };
 ```
 
-##不和任何user namespace关联的资源
+## 不和任何user namespace关联的资源
 
 在系统中，有些需要特权操作的资源没有跟任何user namespace关联，比如修改系统时间（需要CAP_SYS_MODULE）、创建设备（需要CAP_MKNOD），这些操作只能由initial user namespace里有相应权限的进程来操作（这里initial user namespace就是系统启动后的默认user namespace）。
 
-##和mount namespace的关系
+## 和mount namespace的关系
 * 当和mount namespace一起用时，不能挂载基于块设备的文件系统，但是可以挂载下面这些文件系统
 ```
      #摘自user namespaces帮助文件： 
@@ -182,7 +182,7 @@ root@ubuntu:~# cat /proc/self/mountinfo |grep disk| sed 's/ - .*//'
 220 174 7:1 / /home/dev/disks/disk1 rw,relatime shared:154 master:105
 ```
 
-##其他可以写map文件的情况
+## 其他可以写map文件的情况
 1. 在有一种情况下，没有CAP_SETUID的权限也可以写uid_map和gid_map，那就是在父user namespace中用新user namespace的owner来写，但是限制条件是只能在里面映射自己的账号，不能映射其他的账号。
 
 2. 在新user namespace中用有CAP_SETUID权限的账号可以来写map文件，但跟上面的情况一样，只能映射自己。细心的朋友可能觉察到了，那就是都还没有映射，新user namespace里的账号怎么有CAP_SETUID的权限呢？关于这个问题请参考下一节（创建新user namespace时capabilities的变迁）的内容。
@@ -221,7 +221,7 @@ uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
 
 上面写了"deny"到文件/proc/[pid]/setgroups， 是为了限制在新user namespace里面调用setgroups函数来设置groups，这个主要是基于安全考虑。考虑这样一种情况，一个文件的权限为"rwx---rwx"，意味着other group比自己group有更大的权限，当用setgroups(2)去掉自己所属的相应group后，会获得更大的权限，这个在没有user namespace之前不是个问题，因为调用setgroups需要CAP_SETGID权限，但有了user namespace之后，一个普通的账号在新的user namespace中就有了所有的capabilities，于是他可以通过调用setgroups的方式让自己获得更大的权限。
 
-##创建新user namespace时capabilities的变迁
+## 创建新user namespace时capabilities的变迁
 ```
               clone函数                              unshare函数
 +----------------------------------+    +----------------------------------+
@@ -250,10 +250,10 @@ uid=0(root) gid=0(root) groups=0(root),65534(nogroup)
 
 对于unshare来说，由于没有④，所以没法映射任意账号到子user namespace，这也是为什么unshare命令只能映射当前账号的原因。
 
-##其它
+## 其它
 和pid namespace类似，当在程序中用UNIX domain sokcet将一个user namespace的uid或者gid发送给另一个user namespace中的进程时，内核会自动映射成目的user namespace中对应的uid或者gid。
 
-##参考
+## 参考
 * [user namespaces man page](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
 * [Namespaces in operation, part 5: User namespaces](https://lwn.net/Articles/532593/)
 * [Namespaces in operation, part 6: more on user namespaces](https://lwn.net/Articles/540087/)

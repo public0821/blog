@@ -4,7 +4,7 @@ Namespace是对全局系统资源的一种封装隔离，使得处于不同names
 
 >下面的所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##Linux内核支持的namespaces
+## Linux内核支持的namespaces
 
 目前，Linux内核里面实现了7种不同类型的namespace。
 
@@ -21,7 +21,7 @@ UTS         CLONE_NEWUTS      Hostname and NIS domain name (since Linux 2.6.19)
 
 >**注意：** 由于Cgroup namespace在4.6的内核中才实现，并且和cgroup v2关系密切，现在普及程度还不高，比如docker现在就还没有用它，所以在namespace这个系列中不会介绍Cgroup namespace。
 
-##查看进程所属的namespaces
+## 查看进程所属的namespaces
 系统中的每个进程都有/proc/[pid]/ns/这样一个目录，里面包含了这个进程所属namespace的信息，里面每个文件的描述符都可以用来作为setns函数(后面会介绍)的参数。
 
 ```bash
@@ -46,7 +46,7 @@ lrwxrwxrwx 1 dev dev 0 7月 7 17:24 uts -> uts:[4026531838]       #(since Linux 
 * 从上面的输出可以看出，对于每种类型的namespace，进程都会与一个namespace ID关联。
 
 
-##跟namespace相关的API
+## 跟namespace相关的API
 和namespace相关的函数只有三个，这里简单的看一下，后面介绍[UTS namespace](https://segmentfault.com/a/1190000006908598)的时候会有详细的示例
 
 ### [clone](http://man7.org/linux/man-pages/man2/clone.2.html)： 创建一个新的进程并把他放到新的namespace中
@@ -86,20 +86,20 @@ flags：
     这样当前进程就退出了当前指定类型的namespace并加入到新创建的namespace
 ```
 
-###clone和unshare的区别
+### clone和unshare的区别
 clone和unshare的功能都是创建并加入新的namespace， 他们的区别是：
 
 * unshare是使当前进程加入新的namespace
 * clone是创建一个新的子进程，然后让子进程加入新的namespace，而当前进程保持不变
 
-##其它
+## 其它
 当一个namespace中的所有进程都退出时，该namespace将会被销毁。当然还有其他方法让namespace一直存在，假设我们有一个进程号为1000的进程，以ipc namespace为例：
 
 1. 通过mount --bind命令。例如mount --bind /proc/1000/ns/ipc /other/file，就算属于这个ipc namespace的所有进程都退出了，只要/other/file还在，这个ipc namespace就一直存在，其他进程就可以利用/other/file，通过setns函数加入到这个namespace
 
 2. 在其他namespace的进程中打开/proc/1000/ns/ipc文件，并一直持有这个文件描述符不关闭，以后就可以用setns函数加入这个namespace。
 
-##参考
+## 参考
 
 * [overview of Linux namespaces](http://man7.org/linux/man-pages/man7/namespaces.7.html)
 * [Namespaces in operation, part 1: namespaces overview](https://lwn.net/Articles/531114/)

@@ -6,7 +6,7 @@
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##挂载cgroup树
+## 挂载cgroup树
 开始使用cgroup前需要先挂载cgroup树，下面先看看如何挂载一颗cgroup树，然后再查看其根目录下生成的文件
 ```bash
 #准备需要的目录
@@ -47,7 +47,7 @@ dev@ubuntu:~/cgroup$ wc -l ./demo/cgroup.procs
 
 后面在介绍如何往cgroup中添加进程时会介绍cgroup.procs和tasks的差别。
 
-##创建和删除cgroup
+## 创建和删除cgroup
 挂载好上面的cgroup树之后，就可以在里面建子cgroup了
 ```bash
 #创建子cgroup很简单，新建一个目录就可以了
@@ -80,7 +80,7 @@ dev@ubuntu:~/cgroup/demo$ sudo rmdir cgroup1/cgroup11/
 dev@ubuntu:~/cgroup/demo$ sudo rmdir cgroup1/
 ```
 
-##添加进程
+## 添加进程
 创建新的cgroup后，就可以往里面添加进程了。注意下面几点：
 
 * 在一颗cgroup树里面，一个进程必须要属于一个cgroup。
@@ -135,7 +135,7 @@ dev@ubuntu:~/cgroup/demo/test$ cd ..
 #然后删除创建的cgroup
 dev@ubuntu:~/cgroup/demo$ sudo rmdir test
 ```
-##权限
+## 权限
 上面我们都是用sudo(root账号)来操作的，但实际上普通账号也可以操作cgroup
 ```bash
 #创建一个新的cgroup，并修改他的owner
@@ -171,7 +171,7 @@ dev@ubuntu:~/cgroup/demo$ rmdir permission/c1
 dev@ubuntu:~/cgroup/demo$ sudo rmdir permission
 ```
 
-##cgroup.procs vs tasks
+## cgroup.procs vs tasks
 上面提到cgroup.procs包含的是进程ID， 而tasks里面包含的是线程ID，那么他们有什么区别呢？
 ```bash
 #创建两个新的cgroup用于演示
@@ -224,7 +224,7 @@ root@ubuntu:/home/dev/cgroup/demo# exit
 exit
 ```
 
-##release_agent
+## release_agent
 当一个cgroup里没有进程也没有子cgroup时，release_agent将被调用来执行cgroup的清理工作。
 
 ```bash
@@ -259,8 +259,8 @@ dev@ubuntu:~/cgroup/demo$ cat /home/dev/release_demo.log
 /home/dev/cgroup/release_demo.sh:/test
 ```
 
-##结束语
+## 结束语
 本文介绍了如何操作cgroup，由于没有和任何subsystem关联，所以在这颗树上的所有操作都没有实际的功能，不会对系统有影响。从下一篇开始，将介绍具体的subsystem。
 
-##参考
+## 参考
 * [CGROUPS v1](https://www.kernel.org/doc/Documentation/cgroup-v1/cgroups.txt)

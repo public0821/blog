@@ -15,7 +15,7 @@ netns-local: on [fixed]
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##示例
+## 示例
 
 本示例将演示如何创建新的network namespace并同外面的namespace进行通信。
 
@@ -134,7 +134,7 @@ Date: Fri, 15 Jul 2016 08:12:03 GMT
 
 network namespace的概念比较简单，但如何做好网络的隔离和连通却比较难，包括性能和安全相关的考虑，需要很好的Linux网络知识。后续在介绍docker网络管理的时候会对Linux网络做一个更详细的介绍。
 
-##ip netns
+## ip netns
 在单独操作network namespace时，ip netns是一个很方便的工具，并且它可以给namespace取一个名字，然后根据名字来操作namespace。那么给namespace取名字并且根据名字来管理namespace里面的进程是怎么实现的呢？请看下面的脚本(也可以直接看它的[源代码](https://github.com/shemminger/iproute2/blob/master/ip/ipnetns.c))：
 ```bash
 #开始之前，获取一下默认network namespace的ID
@@ -180,5 +180,5 @@ net:[4026532448]
 
 通过这种办法，我们也可以给其他类型的namespace取名字（有些类型的 namespace可能有些特殊，本人没有一个一个的试过）。
 
-##参考
+## 参考
 * [Namespaces in operation, part 7: Network namespaces](https://lwn.net/Articles/580893/)

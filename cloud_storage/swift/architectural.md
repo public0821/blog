@@ -1,4 +1,4 @@
-###Swift 数据模型
+### Swift 数据模型
 
 图1
 
@@ -10,7 +10,7 @@
     
 对文件进行操作的时候，必须告诉Swift该文件属于哪个帐号的哪个container，不然它不知道到哪台服务器上操作该文件。
 
-###Swift主要的Server
+### Swift主要的Server
 
 这里的Server不是指具体的服务器机器，而是我们常说的进程，一个node(指具体的一台服务器机器)上可以放多个Server
 
@@ -40,12 +40,12 @@
 
    它是个逻辑概念，不存在具体的这么一个进程，是Object Server， Container Server， Account Server的统称，由于一般情况下这三个Server都放在同一个node上，所以也可以将Storage Server理解成一个存放这三个Server的node
 
-###各个Server之间的关系
+### 各个Server之间的关系
 
 * 可以将所有的Server都放在同一台机器上， 也可以分开放，他们之间在物理上没有必然的联系。
 * 但通常情况下， 一般将Proxy Server放在一个单独的node， 将所有的Storage Server放到另一个node（因为Container Server， Account Server占用的空间较小，放在单独的机器上浪费空间。）
 
-###其它的Server
+### 其它的Server
 
 * Replication
 

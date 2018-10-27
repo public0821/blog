@@ -8,7 +8,7 @@
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##创建子cgroup
+## 创建子cgroup
 在ubuntu 16.04里面，systemd已经帮我们将各个subsystem和cgroup树绑定并挂载好了，我们直接用现成的就可以了。
 ```bash
 #从这里的输出可以看到，pids已经被挂载在了/sys/fs/cgroup/pids，这是systemd做的
@@ -49,7 +49,7 @@ cgroup.clone_children  cgroup.procs  notify_on_release  pids.current  pids.max  
     max
     ```
 
-##限制进程数
+## 限制进程数
 这里我们演示一下如何让限制功能生效
 ```bash
 #--------------------------第一个shell窗口----------------------
@@ -81,7 +81,7 @@ dev@dev:/sys/fs/cgroup/pids/test$ ls
 -bash: fork: Resource temporarily unavailable
 ```
 
-##当前cgroup和子cgroup之间的关系
+## 当前cgroup和子cgroup之间的关系
 当前cgroup中的pids.current和pids.max代表了当前cgroup及所有子孙cgroup的所有进程，所以子孙cgroup中的pids.max大小不能超过父cgroup中的大小，如果子cgroup中的pids.max设置的大于父cgroup里的大小，会怎么样？请看下面的演示
 ```bash
 #继续使用上面的两个窗口
@@ -135,7 +135,7 @@ dev@dev:/sys/fs/cgroup/pids/test/subtest$ ls
 -bash: fork: retry: No child processes
 -bash: fork: Resource temporarily unavailable
 ```
-##pids.current > pids.max的情况
+## pids.current > pids.max的情况
 并不是所有情况下都是pids.max >= pids.current，在下面两种情况下，会出现pids.max < pids.current 的情况：
 
 * 设置pids.max时，将其值设置的比pids.current小
@@ -212,8 +212,8 @@ dev@dev:/sys/fs/cgroup/pids/test$ cd ..
 dev@dev:/sys/fs/cgroup/pids$ sudo rmdir test/
 ```
 
-##结束语
+## 结束语
 本文介绍了如何利用pids这个subsystem来限制cgroup中的进程数，以及一些要注意的地方，总的来说pids比较简单。下一篇将介绍稍微复杂点的内存控制。
 
-##参考
+## 参考
 * [Process Number Controller](https://www.kernel.org/doc/Documentation/cgroup-v1/pids.txt)

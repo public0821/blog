@@ -11,7 +11,7 @@ user namespace可以嵌套（目前内核控制最多32层），除了系统默�
 
 >本篇所有例子都在ubuntu-server-x86_64 16.04下执行通过
 
-##创建user namespace
+## 创建user namespace
 ```bash
 #--------------------------第一个shell窗口----------------------
 #先记录下目前的id，gid和user namespace
@@ -53,7 +53,7 @@ nobody@ubuntu:~$ touch /home/dev/temp01
 nobody@ubuntu:~$
 ```
 
-##映射user ID和group ID
+## 映射user ID和group ID
 通常情况下，创建新的user namespace后，第一件事就是映射user和group ID. 映射ID的方法是添加配置到/proc/PID/uid_map和/proc/PID/gid_map（这里的PID是新user namespace中的进程ID，刚开始时这两个文件都是空的）. 
 
 这两个文件里面的配置格式如下（可以有多条）：
@@ -276,7 +276,7 @@ root@container001:~# cat /proc/28066/uid_map
 #测试完成后可以关闭这两个窗口，后面不会再用到了
 ```
 
-##user namespace的owner
+## user namespace的owner
 当一个用户创建一个新的user namespace的时候，这个用户就是这个新user namespace的owner，在父user namespace的这个用户就会拥有新user namespace及其所有子孙user namespace的所有capabilities. 
 ```bash
 #--------------------------第四个shell窗口----------------------
@@ -358,10 +358,10 @@ user:[4026532471]
 
 ```
 
-##结束语
+## 结束语
 本文先介绍了user namespace的一些概念，然后介绍如何配置mapping文件，最后介绍了user namespace的owner。从上面的介绍中可以看出，user namespace还是比较复杂的，要了解user namespace，需要对Linux下的权限有一个基本的了解。下一篇中将继续介绍user namespace和其他namespace的关系，以及一些其他的注意事项。
 
-##参考
+## 参考
 * [user namespaces man page](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
 * [Namespaces in operation, part 5: User namespaces](https://lwn.net/Articles/532593/)
 * [Namespaces in operation, part 6: more on user namespaces](https://lwn.net/Articles/540087/)
