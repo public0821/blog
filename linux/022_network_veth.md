@@ -87,7 +87,7 @@ listening on veth1, link-type EN10MB (Ethernet), capture size 262144 bytes
 2. 协议栈根据目的IP地址和系统路由表，知道去192.168.2.1的数据包应该要由192.168.2.11口出去
 3. 由于是第一次访问192.168.2.1，且目的IP和本地IP在同一个网段，所以协议栈会先发送ARP出去，询问192.168.2.1的mac地址
 4. 协议栈将ARP包交给veth0，让它发出去
-5. 由于veth0的另一端连的是veth2，所以ARP请求包就转发给了veth1
+5. 由于veth0的另一端连的是veth1，所以ARP请求包就转发给了veth1
 6. veth1收到ARP包后，转交给另一端的协议栈
 7. 协议栈一看自己的设备列表，发现本地没有192.168.2.1这个IP，于是就丢弃了该ARP请求包，这就是为什么只能看到ARP请求包，看不到应答包的原因
 
@@ -143,7 +143,7 @@ listening on veth1, link-type EN10MB (Ethernet), capture size 262144 bytes
 
 1. ping进程构造ICMP echo请求包，并通过socket发给协议栈，
 2. 由于ping程序指定了走veth0，并且本地ARP缓存里面已经有了相关记录，所以不用再发送ARP出去，协议栈就直接将该数据包交给了veth0
-3. 由于veth0的另一端连的是veth2，所以ICMP echo请求包就转发给了veth1
+3. 由于veth0的另一端连的是veth1，所以ICMP echo请求包就转发给了veth1
 4. veth1收到ICMP echo请求包后，转交给另一端的协议栈
 5. 协议栈一看自己的设备列表，发现本地有192.168.2.1这个IP，于是构造ICMP echo应答包，准备返回
 6. 协议栈查看自己的路由表，发现回给192.168.2.11的数据包应该走lo口，于是将应答包交给lo设备
