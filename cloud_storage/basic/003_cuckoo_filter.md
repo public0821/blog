@@ -91,7 +91,7 @@ bloomfilter对于每个hash结果的位置只需做一个标记，只占用1 bit
 
 ## 结论
 
-通过上面的分析可以看出，cuckoo filter并不是在所有的场合都好于bloomfilter，当有大量删除操作的时候，cuckoo filter肯定要优于bloomfilter，但如果对FPP的要求不是很高，bloomfilter就不需要太多的hash函数和很长的table，无论从性能还是空间利用率都要优于cuckoo filter。
+通过上面的分析可以看出，cuckoo filter并不是在所有的场合都好于bloomfilter，当有大量删除操作的时候，cuckoo filter肯定要优于bloomfilter，但如果对FPP的要求不是很高，bloomfilter就不需要太多的hash函数和很长的table，无论从性能还是空间利用率都要优于cuckoo filter，同时bloomfilter的容错性较好，反复插入同样的数据不会影响正确性，同时也不需要关心删除操作。
 
 ## 参考
 
