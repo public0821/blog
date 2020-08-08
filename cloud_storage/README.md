@@ -1,17 +1,21 @@
 ### 介绍
-尝试写些东西，一方面锻炼自己的表达能力，另一方面通过写的过程来增加对相关知识的理解。 欢迎围观和拍砖。
+
+本人从事对象存储的开发，将自己学习以及工作过程中的一些理解整理出来，一方面梳理一下自己的思路，也希望对初学者有帮助。
 
 #### 云存储
 
-1. [关于云存储](/cloud_storage/thinking_about_cloud_storage.md)
-2. [云存储实现需要考虑的一些东西](/cloud_storage/thinking_about_implement.md)
+1. [公有云和私有云的区别](/cloud_storage/public_vs_private.md)
+2. [云存储的类型](/cloud_storage/types.md)
 
-#### Openstack Swift（TBD）
+#### 基础知识
 
-1. [架构](/cloud_storage/swift/architectural.md)
-2. [ring](/cloud_storage/swift/ring.md)
-3. [上传文件](/cloud_storage/swift/create_object.md)
-4. [Replication](/cloud_storage/swift/replication.md)
-5. [Updater](/cloud_storage/swift/updater.md)
-6. [Auditor](/cloud_storage/swift/auditor.md)
-7. [node或者disk坏掉](/cloud_storage/swift/failure.md)
+1. [cuckoo hashing](/cloud_storage/basic/001_cuckoo_hashing.md)
+2. [bloomfilter](/cloud_storage/basic/002_bloomfilter.md)
+3. [cuckoo filter](/cloud_storage/basic/003_cuckoo_filter.md)
+
+
+#### Openstack Swift
+TBD
+
+### CEPH
+TBD
